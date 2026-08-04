@@ -37,7 +37,7 @@ import {
   Undo,
   Unlink,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaYoutube } from "react-icons/fa";
 
 import { cn } from "./lib/utils";
@@ -133,6 +133,18 @@ export function Toolbar({
 
   // Font Size State
   const [fontSize, setFontSize] = useState(16);
+
+  // Force re-render of the toolbar when the editor's state changes
+  // We do this locally instead of in RichTextEditor to prevent infinite loops.
+  const [, forceUpdate] = useState({});
+  useEffect(() => {
+    if (!editor) return;
+    const update = () => forceUpdate({});
+    editor.on("transaction", update);
+    return () => {
+      editor.off("transaction", update);
+    };
+  }, [editor]);
 
   if (!editor) return null;
 

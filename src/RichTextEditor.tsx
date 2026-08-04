@@ -4,7 +4,6 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import { useEffect, useRef, useState } from "react";
 import CodeEditor from "react-simple-code-editor";
-
 import { AiGenerator } from "./AiGenerator";
 import { getEditorExtensions } from "./extensions";
 import { FindReplace } from "./FindReplace";
@@ -13,6 +12,7 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
 import { TableBubbleMenu } from "./TableBubbleMenu";
 import { Toolbar } from "./Toolbar";
+import { StyleInjector } from "./StyleInjector";
 
 export interface RichTextEditorProps {
   value?: string;
@@ -21,23 +21,8 @@ export interface RichTextEditorProps {
   className?: string;
   isSimple?: boolean;
   toolbarPosition?: "top" | "bottom";
-  /**
-   * Handle uploading a picked/dropped/pasted image file and resolve its
-   * public URL. When omitted, images are embedded as base64 data URLs
-   * instead. Used by the toolbar/slash "Image" action, the Upload dialog,
-   * and dragging or pasting an image directly onto the editor.
-   */
   onImageUpload?: (file: File) => Promise<string>;
-  /**
-   * Fetch previously uploaded media so the user can insert from a library
-   * instead of uploading a new file. When omitted, the Library tab in the
-   * image dialog is hidden.
-   */
   onListMedia?: () => Promise<MediaItem[]>;
-  /**
-   * Handle an AI content generation request. When omitted, the AI
-   * Generator toolbar button and dialog are hidden entirely.
-   */
   onAiGenerate?: (prompt: string) => Promise<string>;
 }
 
@@ -83,6 +68,8 @@ export function RichTextEditor({
     })();
   };
 
+  const lastUpdatedValue = useRef(value);
+
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, {
       onImageCommand: () => setIsImageManagerOpen(true),
@@ -116,14 +103,20 @@ export function RichTextEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      onChange?.(editor.getHTML());
+      const html = editor.getHTML();
+      lastUpdatedValue.current = html;
+      onChange?.(html);
     },
   });
 
   // Sync external value changes
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+    if (editor && value !== undefined) {
+      if (value === lastUpdatedValue.current || value === editor.getHTML()) {
+        return;
+      }
+      editor.commands.setContent(value, { emitUpdate: false });
+      lastUpdatedValue.current = value;
     }
   }, [value, editor]);
 
@@ -180,7 +173,8 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 hellokit-editor-scope">
+      <StyleInjector />
       <div className={className ? className : "border border-border rounded-md overflow-hidden"}>
         {toolbarPosition === "top" && (
           <Toolbar
@@ -220,7 +214,7 @@ export function RichTextEditor({
         ) : (
           <>
             <TableBubbleMenu editor={editor} />
-            <div className="relative w-full max-h-[500px] 2xl:max-h-[600px] overflow-y-auto">
+            <div className="relative w-full min-h-[500px] max-h-[800px] overflow-y-auto">
               <EditorContent editor={editor} />
             </div>
           </>
