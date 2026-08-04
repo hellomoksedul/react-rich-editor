@@ -2,7 +2,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { Loader2 } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CodeEditor from "react-simple-code-editor";
 
 import { AiGenerator } from "./AiGenerator";
@@ -10,6 +10,7 @@ import { getEditorExtensions } from "./extensions";
 import { FindReplace } from "./FindReplace";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
 import { TableBubbleMenu } from "./TableBubbleMenu";
 import { Toolbar } from "./Toolbar";
 
@@ -21,10 +22,18 @@ export interface RichTextEditorProps {
   isSimple?: boolean;
   toolbarPosition?: "top" | "bottom";
   /**
-   * Handle uploading a picked/dropped image file and resolve its public URL.
-   * When omitted, images are embedded as base64 data URLs instead.
+   * Handle uploading a picked/dropped/pasted image file and resolve its
+   * public URL. When omitted, images are embedded as base64 data URLs
+   * instead. Used by the toolbar/slash "Image" action, the Upload dialog,
+   * and dragging or pasting an image directly onto the editor.
    */
   onImageUpload?: (file: File) => Promise<string>;
+  /**
+   * Fetch previously uploaded media so the user can insert from a library
+   * instead of uploading a new file. When omitted, the Library tab in the
+   * image dialog is hidden.
+   */
+  onListMedia?: () => Promise<MediaItem[]>;
   /**
    * Handle an AI content generation request. When omitted, the AI
    * Generator toolbar button and dialog are hidden entirely.
@@ -40,6 +49,7 @@ export function RichTextEditor({
   isSimple = false,
   toolbarPosition = "top",
   onImageUpload,
+  onListMedia,
   onAiGenerate,
 }: RichTextEditorProps) {
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
@@ -50,6 +60,29 @@ export function RichTextEditor({
   const [selectedTextForSearch, setSelectedTextForSearch] = useState("");
   const [sourceCode, setSourceCode] = useState("");
 
+  // Kept fresh via effect below so the drop/paste handlers below (captured
+  // once by useEditor) always call the latest onImageUpload prop.
+  const onImageUploadRef = useRef(onImageUpload);
+  useEffect(() => {
+    onImageUploadRef.current = onImageUpload;
+  }, [onImageUpload]);
+
+  const insertImagesAt = (view: import("@tiptap/pm/view").EditorView, files: File[], startPos: number) => {
+    let pos = startPos;
+    void (async () => {
+      for (const file of files) {
+        try {
+          const url = await resolveImageUpload(file, onImageUploadRef.current);
+          const node = view.state.schema.nodes.image.create({ src: url });
+          view.dispatch(view.state.tr.insert(pos, node));
+          pos += node.nodeSize;
+        } catch {
+          // Skip files that fail to upload; continue with the rest.
+        }
+      }
+    })();
+  };
+
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, {
       onImageCommand: () => setIsImageManagerOpen(true),
@@ -59,6 +92,27 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class: `focus:outline-none ${isSimple ? "simple-mode" : ""}`,
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false;
+        const files = Array.from(event.dataTransfer?.files ?? []).filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        if (files.length === 0) return false;
+        event.preventDefault();
+        const coords = { left: event.clientX, top: event.clientY };
+        const pos = view.posAtCoords(coords)?.pos ?? view.state.selection.from;
+        insertImagesAt(view, files, pos);
+        return true;
+      },
+      handlePaste: (view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        if (files.length === 0) return false;
+        event.preventDefault();
+        insertImagesAt(view, files, view.state.selection.from);
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
@@ -214,6 +268,7 @@ export function RichTextEditor({
             onClose={() => setIsImageManagerOpen(false)}
             onSelect={handleImageSelect}
             onImageUpload={onImageUpload}
+            onListMedia={onListMedia}
           />
         )}
       </div>

@@ -10,6 +10,7 @@ export type { SlashCommandItem, SlashCommandOptions } from "./SlashCommand";
 export { htmlToMarkdown, markdownToHtml } from "./markdown-utils";
 export { ImageUploadDialog } from "./ImageUploadDialog";
 export type { ImageUploadDialogProps } from "./ImageUploadDialog";
+export type { MediaItem } from "./lib/image-upload";
 export { FindReplace } from "./FindReplace";
 export { KeyboardShortcuts } from "./KeyboardShortcuts";
 export { AiGenerator } from "./AiGenerator";

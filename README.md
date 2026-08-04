@@ -149,8 +149,17 @@ export default function Editor() {
 | `className`        | `string`                                      | —                    | Overrides the outer wrapper's className.                                      |
 | `isSimple`         | `boolean`                                     | `false`              | Compact mode: hides word count, insert/media tools, shortcuts & AI generator. |
 | `toolbarPosition`  | `"top" \| "bottom"`                           | `"top"`              | Where the toolbar renders.                                                    |
-| `onImageUpload`    | `(file: File) => Promise<string>`             | —                    | Upload a picked/dropped image and resolve its public URL. Without it, images are embedded as base64 data URLs. |
+| `onImageUpload`    | `(file: File) => Promise<string>`             | —                    | Upload a picked/dropped/pasted image and resolve its public URL. Used by the toolbar/slash "Image" action, the Upload dialog, and dragging or pasting an image directly onto the editor. Without it, images are embedded as base64 data URLs. |
+| `onListMedia`      | `() => Promise<MediaItem[]>`                  | —                    | Fetch previously uploaded media for the image dialog's Library tab. Without it, the Library tab is hidden. `MediaItem` is `{ url, name?, type?: "image" \| "video" }`. |
 | `onAiGenerate`     | `(prompt: string) => Promise<string>`         | —                    | Handle an AI content generation request (return raw HTML). Without it, the AI Generator button is hidden. |
+
+### Inserting images
+
+There are four ways to insert an image, all resolved through the same `onImageUpload`:
+
+- Toolbar's Image button or `/image` slash command → opens the Add Image dialog (Upload / Library / URL tabs)
+- **Drag and drop** an image file directly onto the editor content
+- **Paste** an image (e.g. from the clipboard/screenshot) directly into the editor content
 
 ### Wiring up image upload
 
@@ -200,6 +209,21 @@ If your backend uses a presigned-URL flow (e.g. Cloudflare R2 / S3, matching the
 />
 ```
 
+### Wiring up a media library
+
+```tsx
+<RichTextEditor
+  value={html}
+  onChange={setHtml}
+  onImageUpload={uploadToR2}
+  onListMedia={async () => {
+    const res = await fetch("/api/r2/files?type=image&limit=50");
+    const { files } = await res.json();
+    return files.map((f: any) => ({ url: f.publicUrl, name: f.filename, type: "image" }));
+  }}
+/>
+```
+
 ### Wiring up AI generation
 
 ```tsx
@@ -232,6 +256,7 @@ import {
   htmlToMarkdown,
   markdownToHtml,
 } from "@hellokit/react-rich-editor";
+import type { MediaItem } from "@hellokit/react-rich-editor";
 ```
 
 ## Next.js
