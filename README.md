@@ -168,6 +168,38 @@ export default function Editor() {
 />
 ```
 
+If your backend uses a presigned-URL flow (e.g. Cloudflare R2 / S3, matching the pattern in `/api/r2/upload`):
+
+```tsx
+<RichTextEditor
+  value={html}
+  onChange={setHtml}
+  onImageUpload={async (file) => {
+    const presignRes = await fetch("/api/r2/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type,
+        size: file.size,
+      }),
+    });
+    if (!presignRes.ok) throw new Error("Failed to get upload URL");
+    const { url, key } = await presignRes.json();
+
+    const uploadRes = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error("Upload failed");
+
+    const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "";
+    return publicUrl ? `${publicUrl}/${key}` : `/${key}`;
+  }}
+/>
+```
+
 ### Wiring up AI generation
 
 ```tsx
