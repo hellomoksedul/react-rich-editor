@@ -30,6 +30,10 @@ export const getEditorExtensions = (
   options: GetEditorExtensionsOptions = {},
 ): Extensions => [
   StarterKit.configure({
+    // Configured separately below (custom title attribute / node view), so
+    // disable StarterKit's bundled defaults to avoid duplicate registration.
+    link: false,
+    underline: false,
     heading: {
       levels: [1, 2, 3, 4, 5, 6],
     },
