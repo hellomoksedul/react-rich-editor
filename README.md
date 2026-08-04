@@ -2,7 +2,8 @@
 
 A full-featured, Tiptap-based rich text editor for React — the same editor used across [moksedul.com](https://moksedul.com), packaged as a standalone, installable component.
 
-- Rich formatting toolbar: headings, font size, text/highlight color, bold/italic/underline/strike/code, alignment, lists with indent, blockquote, code block, horizontal rule
+- Rich formatting toolbar: headings, font size, text/highlight color, bold/italic/underline/strike/code, alignment, lists with indent, task list, blockquote, code block, horizontal rule
+- Slash command menu (`/`) for quick-inserting blocks, filterable as you type
 - Resizable, alignable images (drag handles, block/inline display, alt/title)
 - Resizable, alignable YouTube embeds
 - Tables with a bubble menu (add/remove rows & columns, cell background color, merge/split)
@@ -186,11 +187,16 @@ export default function Editor() {
 />
 ```
 
+### Slash command menu
+
+Type `/` at the start of an empty line to open a quick-insert menu (Text, Heading 1–3, Bullet/Numbered/Task List, Blockquote, Code Block, Table, Horizontal Rule, and Image when `onImageUpload` is configured). Filter by typing after `/`, navigate with arrow keys, select with Enter, dismiss with Escape.
+
 ### Other exports
 
 ```ts
 import {
   getEditorExtensions, // the Tiptap extension list, if you want to build a custom editor instance
+  SlashCommand, // the slash-command Tiptap extension, if building a custom extension list
   htmlToMarkdown,
   markdownToHtml,
 } from "@hellokit/react-rich-editor";

@@ -51,7 +51,9 @@ export function RichTextEditor({
   const [sourceCode, setSourceCode] = useState("");
 
   const editor = useEditor({
-    extensions: getEditorExtensions(placeholder),
+    extensions: getEditorExtensions(placeholder, {
+      onImageCommand: () => setIsImageManagerOpen(true),
+    }),
     content: value,
     immediatelyRender: false,
     editorProps: {

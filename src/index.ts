@@ -3,7 +3,10 @@ export type { RichTextEditorProps } from "./RichTextEditor";
 
 export { Toolbar } from "./Toolbar";
 export { getEditorExtensions } from "./extensions";
+export type { GetEditorExtensionsOptions } from "./extensions";
 export { FontSize } from "./FontSizeExtension";
+export { SlashCommand } from "./SlashCommand";
+export type { SlashCommandItem, SlashCommandOptions } from "./SlashCommand";
 export { htmlToMarkdown, markdownToHtml } from "./markdown-utils";
 export { ImageUploadDialog } from "./ImageUploadDialog";
 export type { ImageUploadDialogProps } from "./ImageUploadDialog";

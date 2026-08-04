@@ -7,6 +7,7 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  CheckSquare,
   ChevronDown,
   Code,
   CodeXml,
@@ -603,6 +604,12 @@ export function Toolbar({
             >
               <ListOrdered className="mr-2 h-4 w-4" />
               <span>Numbered List</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+            >
+              <CheckSquare className="mr-2 h-4 w-4" />
+              <span>Task List</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
