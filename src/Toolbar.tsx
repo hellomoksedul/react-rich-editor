@@ -232,7 +232,7 @@ export function Toolbar({
         </Select>
 
         {/* Font Size Controls - Inline */}
-        <div className="flex items-center border border-input rounded-md h-8 overflow-hidden bg-transparent shadow-sm">
+        <div className="flex items-center border border-input rounded-md h-8 overflow-hidden bg-transparent">
           <Button
             type="button"
             variant="ghost"
