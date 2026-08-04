@@ -75,31 +75,29 @@ export function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcutsProps) {
           <DialogTitle>Keyboard Shortcuts</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[500px] overflow-y-auto pr-4">
-          <div className="space-y-6">
-            {shortcuts.map((section) => (
-              <div key={section.category}>
-                <h3 className="text-sm font-semibold text-foreground mb-3">
-                  {section.category}
-                </h3>
-                <div className="space-y-2">
-                  {section.items.map((shortcut) => (
-                    <div
-                      key={shortcut.action}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted-foreground">
-                        {shortcut.action}
-                      </span>
-                      <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border border-border">
-                        {shortcut.keys}
-                      </kbd>
-                    </div>
-                  ))}
-                </div>
+        <div className="space-y-6">
+          {shortcuts.map((section) => (
+            <div key={section.category}>
+              <h3 className="text-sm font-semibold text-foreground mb-3">
+                {section.category}
+              </h3>
+              <div className="space-y-2">
+                {section.items.map((shortcut) => (
+                  <div
+                    key={shortcut.action}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-muted-foreground">
+                      {shortcut.action}
+                    </span>
+                    <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border border-border">
+                      {shortcut.keys}
+                    </kbd>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </DialogContent>
     </Dialog>

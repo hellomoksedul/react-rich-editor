@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -19,6 +19,7 @@ interface AiGeneratorProps {
 }
 
 export function AiGenerator({ editor, isOpen, onClose, onGenerate }: AiGeneratorProps) {
+  const promptId = useId();
   const [prompt, setPrompt] = useState("");
   const [generatedText, setGeneratedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -74,9 +75,9 @@ export function AiGenerator({ editor, isOpen, onClose, onGenerate }: AiGenerator
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="prompt">What would you like to write?</Label>
+            <Label htmlFor={promptId}>What would you like to write?</Label>
             <Textarea
-              id="prompt"
+              id={promptId}
               placeholder="E.g., Write a blog post introduction about the benefits of meditation..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}

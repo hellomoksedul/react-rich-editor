@@ -16,7 +16,7 @@ import {
   TextQuote,
   Trash2,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 export function ResizableImage({
   node,
@@ -24,6 +24,8 @@ export function ResizableImage({
   selected,
   deleteNode,
 }: NodeViewProps) {
+  const altTextId = useId();
+  const titleTextId = useId();
   const [alt, setAlt] = useState(node.attrs.alt || "");
   const [title, setTitle] = useState(node.attrs.title || "");
   // Local align state for UI, though we generally rely on node.attrs
@@ -419,13 +421,13 @@ export function ResizableImage({
                   {/* Alt Text Input */}
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="alt-text"
+                      htmlFor={altTextId}
                       className="text-xs font-semibold text-muted-foreground"
                     >
                       Alt Text
                     </Label>
                     <Input
-                      id="alt-text"
+                      id={altTextId}
                       value={alt}
                       onChange={(e) => setAlt(e.target.value)}
                       onBlur={() => updateAttributes({ alt: alt })}
@@ -437,13 +439,13 @@ export function ResizableImage({
                   {/* Title Input */}
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="title-text"
+                      htmlFor={titleTextId}
                       className="text-xs font-semibold text-muted-foreground"
                     >
                       Title Attribute
                     </Label>
                     <Input
-                      id="title-text"
+                      id={titleTextId}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       onBlur={() => updateAttributes({ title: title })}

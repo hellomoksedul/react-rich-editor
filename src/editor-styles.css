@@ -205,12 +205,14 @@
   z-index: 20;
 }
 
-.tableWrapper {
+.ProseMirror .tableWrapper {
   overflow-x: auto;
   margin: 1.5rem 0;
 }
 
-.resize-cursor {
+/* Applied directly on the .ProseMirror element (compound class, not a
+   descendant) while a table column is being resized. */
+.ProseMirror.resize-cursor {
   cursor: col-resize;
 }
 
@@ -265,25 +267,25 @@
 }
 
 /* Task List specific styles - Fix for double bullets */
-ul[data-type="taskList"] {
+.ProseMirror ul[data-type="taskList"] {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-ul[data-type="taskList"] li {
+.ProseMirror ul[data-type="taskList"] li {
   display: flex;
   gap: 8px; /* Space between checkbox and text */
   margin-bottom: 0.5rem;
 }
 
-ul[data-type="taskList"] li > label {
+.ProseMirror ul[data-type="taskList"] li > label {
   flex: 0 0 auto;
   margin-right: 0.5rem;
   user-select: none;
   cursor: pointer;
 }
 
-ul[data-type="taskList"] li > div {
+.ProseMirror ul[data-type="taskList"] li > div {
   flex: 1 1 auto;
 }
