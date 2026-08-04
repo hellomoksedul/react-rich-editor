@@ -169,14 +169,14 @@ export function Toolbar({
   return (
     <div className={cn(
       "flex flex-wrap items-center gap-1 p-2 sticky top-0 z-20 backdrop-blur-sm max-w-full",
-      isSimple ? "bg-transparent" : "border-b bg-muted/30"
+      isSimple ? "bg-transparent" : "border-b border-border bg-muted/30"
     )}>
       {/* 
         --------------------------------------------------------
         0. HISTORY (Moved to Start)
         --------------------------------------------------------
       */}
-      <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
@@ -198,7 +198,7 @@ export function Toolbar({
         1. TYPE & SIZE
         --------------------------------------------------------
       */}
-      <div className="flex items-center gap-1 border-r pr-2 mr-1">
+      <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
         <Select value={getCurrentHeading()} onValueChange={handleHeadingChange}>
           <SelectTrigger className="h-8 w-[130px]">
             <SelectValue />
@@ -247,7 +247,7 @@ export function Toolbar({
                 .run();
             }}
             title="Decrease Font Size"
-            className="h-full w-8 p-0 rounded-none border-r hover:bg-muted"
+            className="h-full w-8 p-0 rounded-none border-r border-border hover:bg-muted"
           >
             <Minus className="h-3 w-3" />
           </Button>
@@ -284,7 +284,7 @@ export function Toolbar({
                 .run();
             }}
             title="Increase Font Size"
-            className="h-full w-8 p-0 rounded-none border-l hover:bg-muted"
+            className="h-full w-8 p-0 rounded-none border-l border-border hover:bg-muted"
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -316,7 +316,7 @@ export function Toolbar({
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
-                      className="w-6 h-6 rounded-md border cursor-pointer hover:scale-110 transition-transform"
+                      className="w-6 h-6 rounded-md border border-border cursor-pointer hover:scale-110 transition-transform"
                       style={{ backgroundColor: color }}
                       onClick={() => {
                         editor.chain().focus().setColor(color).run();
@@ -326,7 +326,7 @@ export function Toolbar({
                     />
                   ))}
                   <button
-                    className="w-6 h-6 rounded-md border cursor-pointer flex items-center justify-center hover:bg-muted"
+                    className="w-6 h-6 rounded-md border border-border cursor-pointer flex items-center justify-center hover:bg-muted"
                     onClick={() => {
                       editor.chain().focus().unsetColor().run();
                       setIsTextColorOpen(false);
@@ -391,7 +391,7 @@ export function Toolbar({
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
-                      className="w-6 h-6 rounded-md border cursor-pointer hover:scale-110 transition-transform"
+                      className="w-6 h-6 rounded-md border border-border cursor-pointer hover:scale-110 transition-transform"
                       style={{ backgroundColor: color }}
                       onClick={() => {
                         editor
@@ -405,7 +405,7 @@ export function Toolbar({
                     />
                   ))}
                   <button
-                    className="w-6 h-6 rounded-md border cursor-pointer flex items-center justify-center hover:bg-muted"
+                    className="w-6 h-6 rounded-md border border-border cursor-pointer flex items-center justify-center hover:bg-muted"
                     onClick={() => {
                       editor.chain().focus().unsetHighlight().run();
                       setIsHighlightOpen(false);
@@ -459,7 +459,7 @@ export function Toolbar({
         2. BASIC FORMATTING
         --------------------------------------------------------
       */}
-      <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive("bold")}
@@ -519,7 +519,7 @@ export function Toolbar({
         3. ALIGNMENT
         --------------------------------------------------------
       */}
-      <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -578,7 +578,7 @@ export function Toolbar({
         4. LISTS
         --------------------------------------------------------
       */}
-      <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -632,7 +632,7 @@ export function Toolbar({
         --------------------------------------------------------
       */}
       {!isSimple && (
-        <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
         <Popover>
           <PopoverTrigger asChild>
             <Button

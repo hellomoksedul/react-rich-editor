@@ -148,7 +148,7 @@ export function ResizableYoutube({
         style={getWrapperStyle()}
       >
         {/* Video Container - Aspect Ratio preservation is handled by resizing logic */}
-        <div className="w-full h-full relative bg-slate-100 rounded-sm overflow-hidden border border-slate-200">
+        <div className="w-full h-full relative bg-muted rounded-sm overflow-hidden border border-border">
           {/* Overlay to capture clicks/drags over iframe */}
           {isResizing && (
             <div className="absolute inset-0 z-10 bg-transparent" />
@@ -202,7 +202,7 @@ export function ResizableYoutube({
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="h-8 w-8 shadow-md bg-white/90 hover:bg-white text-slate-700 backdrop-blur-sm"
+                  className="h-8 w-8 shadow-md bg-popover/90 hover:bg-popover text-popover-foreground backdrop-blur-sm"
                 >
                   <Settings2 className="h-4 w-4" />
                 </Button>

@@ -50,9 +50,9 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       shouldShow={({ editor }) => {
         return editor.isActive("table");
       }}
-      className="flex flex-wrap items-center gap-1 rounded-lg border bg-background p-1 shadow-lg"
+      className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg"
     >
-      <div className="flex items-center gap-0.5 border-r pr-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-1">
         <Button
           type="button"
           variant="ghost"
@@ -85,7 +85,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         </Button>
       </div>
 
-      <div className="flex items-center gap-0.5 border-r pr-1 pl-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
         <Button
           type="button"
           variant="ghost"
@@ -118,7 +118,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         </Button>
       </div>
 
-      <div className="flex items-center gap-0.5 border-r pr-1 pl-1">
+      <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -138,7 +138,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                   type="button"
                   key={color.name}
                   onClick={() => setCellBackground(color.value)}
-                  className={`h-6 w-6 rounded-sm border ${
+                  className={`h-6 w-6 rounded-sm border border-border ${
                     color.value === "" ? "bg-background" : ""
                   }`}
                   style={{ backgroundColor: color.value }}

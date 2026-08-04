@@ -183,7 +183,7 @@ export function FindReplace({
               id="caseSensitive"
               checked={caseSensitive}
               onChange={(e) => setCaseSensitive(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-input"
             />
             <Label
               htmlFor="caseSensitive"
@@ -194,7 +194,7 @@ export function FindReplace({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end pt-2 border-t">
+          <div className="flex gap-2 justify-end pt-2 border-t border-border">
             <Button
               variant="outline"
               onClick={replaceOne}

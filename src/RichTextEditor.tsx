@@ -117,7 +117,7 @@ export function RichTextEditor({
 
   if (!editor) {
     return (
-      <div className="flex h-[400px] items-center justify-center border rounded-md">
+      <div className="flex h-[400px] items-center justify-center border border-border rounded-md">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -125,7 +125,7 @@ export function RichTextEditor({
 
   return (
     <div className="space-y-4">
-      <div className={className ? className : "border rounded-md overflow-hidden"}>
+      <div className={className ? className : "border border-border rounded-md overflow-hidden"}>
         {toolbarPosition === "top" && (
           <Toolbar
             editor={editor}
@@ -144,7 +144,7 @@ export function RichTextEditor({
         )}
 
         {isSourceMode ? (
-          <div className="relative w-full h-[500px] 2xl:h-[600px] bg-[#2d2d2d] overflow-y-auto border-t">
+          <div className="relative w-full h-[500px] 2xl:h-[600px] bg-[#2d2d2d] overflow-y-auto border-t border-border">
             <CodeEditor
               value={sourceCode}
               onValueChange={(code) => setSourceCode(code)}
@@ -189,7 +189,7 @@ export function RichTextEditor({
 
         {/* Word Count Status Bar */}
         {!isSimple && (
-          <div className="border-t px-4 py-2 bg-muted/20 text-xs text-muted-foreground flex items-center gap-4">
+          <div className="border-t border-border px-4 py-2 bg-muted/20 text-xs text-muted-foreground flex items-center gap-4">
             <span>
               Words: <strong className="text-foreground">{editor.storage.characterCount?.words() || 0}</strong>
             </span>

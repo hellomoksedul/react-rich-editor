@@ -287,7 +287,7 @@ export function ResizableImage({
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="h-8 w-8 shadow-md bg-white/90 hover:bg-white text-slate-700 backdrop-blur-sm"
+                  className="h-8 w-8 shadow-md bg-popover/90 hover:bg-popover text-popover-foreground backdrop-blur-sm"
                 >
                   <Settings2 className="h-4 w-4" />
                 </Button>

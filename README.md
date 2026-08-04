@@ -48,28 +48,73 @@ module.exports = {
 };
 ```
 
-**3. Define the shadcn-style theme tokens** the components rely on (`background`, `foreground`, `border`, `input`, `ring`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `popover`, plus their `-foreground` pairs). If your app already uses shadcn/ui, you already have these. Otherwise add them to your theme, e.g. (Tailwind v4):
+**3. Define the shadcn-style theme tokens** the components rely on (`background`, `foreground`, `border`, `input`, `ring`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `popover`, plus their `-foreground` pairs), for **both** light and dark. Every component uses explicit token classes (`border-border`, `bg-popover`, ...) rather than relying on a global reset, and the editor's content CSS (`styles.css`) reads the same raw `--border`/`--foreground`/... variables directly — so as soon as your app defines them for light and dark, the whole editor (toolbar, dialogs, and typed content) follows automatically.
+
+If your app already uses shadcn/ui with `next-themes` (class-based dark mode, e.g. `<html class="dark">`), you already have all of this — skip to Usage.
+
+Otherwise, add it — Tailwind v4:
 
 ```css
-@theme {
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #0a0a0a;
-  --color-primary: #171717;
-  --color-primary-foreground: #fafafa;
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #171717;
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
-  --color-accent: #f4f4f5;
-  --color-accent-foreground: #171717;
-  --color-destructive: #ef4444;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #0a0a0a;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #171717;
+  --destructive: #ef4444;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+}
+
+/* Toggle by adding/removing `dark` on <html> (this is what next-themes does) */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+  --primary: #fafafa;
+  --primary-foreground: #171717;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #f87171;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
 }
 ```
+
+Tailwind v3 (`tailwind.config.js` + globals.css): define the same `--background`/`--border`/... variables in `:root` and `.dark` in your CSS, then map them in `theme.extend.colors` (`background: "hsl(var(--background))"` or plain `var(--background)`, matching whichever color format you used) — this is the same pattern the shadcn CLI generates.
 
 Optional: install [`tailwindcss-animate`](https://github.com/jamiebuilds/tailwindcss-animate) (v3) or [`tw-animate-css`](https://github.com/Wombosvideo/tw-animate-css) (v4) for the dialog/popover fade & zoom animations. Everything works without it, just without the transition.
 

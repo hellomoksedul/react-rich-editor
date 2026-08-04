@@ -91,7 +91,7 @@ export function KeyboardShortcuts({ isOpen, onClose }: KeyboardShortcutsProps) {
                       <span className="text-muted-foreground">
                         {shortcut.action}
                       </span>
-                      <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border">
+                      <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border border-border">
                         {shortcut.keys}
                       </kbd>
                     </div>
