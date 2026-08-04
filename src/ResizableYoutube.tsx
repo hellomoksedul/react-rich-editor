@@ -73,14 +73,14 @@ export function ResizableYoutube({
   };
 
   const handleResizeStart = (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.TouchEvent,
     direction: "se" | "sw" | "ne" | "nw"
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsResizing(true);
-    const startX = e.clientX;
+    const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const container = containerRef.current;
     if (!container) return;
 
@@ -88,13 +88,16 @@ export function ResizableYoutube({
     const startHeight = container.offsetHeight;
     const aspectRatio = startWidth / startHeight;
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
       rafRef.current = requestAnimationFrame(() => {
-        const dx = moveEvent.clientX - startX;
+        const clientX =
+          "touches" in moveEvent ? moveEvent.touches[0]?.clientX : moveEvent.clientX;
+        if (clientX === undefined) return;
+        const dx = clientX - startX;
         let newWidth = startWidth;
 
         if (direction.includes("e")) newWidth += dx;
@@ -110,9 +113,11 @@ export function ResizableYoutube({
       });
     };
 
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+    const onEnd = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onEnd);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setIsResizing(false);
       if (container) {
@@ -123,8 +128,10 @@ export function ResizableYoutube({
       }
     };
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onEnd);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onEnd);
   };
 
   const getYoutubeEmbedUrl = (url: string) => {
@@ -172,24 +179,28 @@ export function ResizableYoutube({
         {(selected || isResizing) && (
           <>
             <div
-              className={`absolute top-0 left-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-nw-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute top-0 left-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-nw-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(-50%, -50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "nw")}
+              onTouchStart={(e) => handleResizeStart(e, "nw")}
             />
             <div
-              className={`absolute top-0 right-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-ne-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute top-0 right-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-ne-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(50%, -50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "ne")}
+              onTouchStart={(e) => handleResizeStart(e, "ne")}
             />
             <div
-              className={`absolute bottom-0 left-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-sw-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute bottom-0 left-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-sw-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(-50%, 50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "sw")}
+              onTouchStart={(e) => handleResizeStart(e, "sw")}
             />
             <div
-              className={`absolute bottom-0 right-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-se-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute bottom-0 right-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-se-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(50%, 50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "se")}
+              onTouchStart={(e) => handleResizeStart(e, "se")}
             />
           </>
         )}

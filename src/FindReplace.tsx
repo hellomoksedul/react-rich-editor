@@ -2,7 +2,7 @@
 
 import { Editor } from "@tiptap/react";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -22,6 +22,9 @@ export function FindReplace({
   onClose,
   initialSearchTerm = "",
 }: FindReplaceProps) {
+  const searchId = useId();
+  const replaceId = useId();
+  const caseSensitiveId = useId();
   const [searchTerm, setSearchTerm] = useState("");
   const [replaceTerm, setReplaceTerm] = useState("");
   const [caseSensitive, setCaseSensitive] = useState(false);
@@ -118,7 +121,7 @@ export function FindReplace({
           {/* Find Input */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="search">Find</Label>
+              <Label htmlFor={searchId}>Find</Label>
               {totalMatches > 0 && (
                 <span className="text-xs text-muted-foreground">
                   {currentMatch} of {totalMatches}{" "}
@@ -133,7 +136,7 @@ export function FindReplace({
             </div>
             <div className="flex gap-2">
               <Input
-                id="search"
+                id={searchId}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search text..."
@@ -167,9 +170,9 @@ export function FindReplace({
 
           {/* Replace Input */}
           <div className="space-y-2">
-            <Label htmlFor="replace">Replace with</Label>
+            <Label htmlFor={replaceId}>Replace with</Label>
             <Input
-              id="replace"
+              id={replaceId}
               value={replaceTerm}
               onChange={(e) => setReplaceTerm(e.target.value)}
               placeholder="Replacement text..."
@@ -180,13 +183,13 @@ export function FindReplace({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              id="caseSensitive"
+              id={caseSensitiveId}
               checked={caseSensitive}
               onChange={(e) => setCaseSensitive(e.target.checked)}
               className="h-4 w-4 rounded border-input"
             />
             <Label
-              htmlFor="caseSensitive"
+              htmlFor={caseSensitiveId}
               className="text-sm font-normal cursor-pointer"
             >
               Match case

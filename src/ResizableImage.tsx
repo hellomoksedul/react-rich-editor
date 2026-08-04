@@ -16,7 +16,7 @@ import {
   TextQuote,
   Trash2,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 export function ResizableImage({
   node,
@@ -24,6 +24,8 @@ export function ResizableImage({
   selected,
   deleteNode,
 }: NodeViewProps) {
+  const altTextId = useId();
+  const titleTextId = useId();
   const [alt, setAlt] = useState(node.attrs.alt || "");
   const [title, setTitle] = useState(node.attrs.title || "");
   // Local align state for UI, though we generally rely on node.attrs
@@ -157,14 +159,14 @@ export function ResizableImage({
   };
 
   const handleResizeStart = (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.TouchEvent,
     direction: "se" | "sw" | "ne" | "nw"
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsResizing(true);
-    const startX = e.clientX;
+    const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const container = containerRef.current;
     if (!container) return;
 
@@ -176,13 +178,16 @@ export function ResizableImage({
         ? img.naturalWidth / img.naturalHeight
         : startWidth / container.offsetHeight;
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
 
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
       rafRef.current = requestAnimationFrame(() => {
-        const dx = moveEvent.clientX - startX;
+        const clientX =
+          "touches" in moveEvent ? moveEvent.touches[0]?.clientX : moveEvent.clientX;
+        if (clientX === undefined) return;
+        const dx = clientX - startX;
         let newWidth = startWidth;
 
         // Simplify for main use cases: expanding horizontally
@@ -200,9 +205,11 @@ export function ResizableImage({
       });
     };
 
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+    const onEnd = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onEnd);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setIsResizing(false);
       if (container) {
@@ -213,8 +220,10 @@ export function ResizableImage({
       }
     };
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onEnd);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onEnd);
   };
 
   return (
@@ -257,24 +266,28 @@ export function ResizableImage({
         {(selected || isResizing) && (
           <>
             <div
-              className={`absolute top-0 left-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-nw-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute top-0 left-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-nw-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(-50%, -50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "nw")}
+              onTouchStart={(e) => handleResizeStart(e, "nw")}
             />
             <div
-              className={`absolute top-0 right-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-ne-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute top-0 right-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-ne-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(50%, -50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "ne")}
+              onTouchStart={(e) => handleResizeStart(e, "ne")}
             />
             <div
-              className={`absolute bottom-0 left-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-sw-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute bottom-0 left-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-sw-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(-50%, 50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "sw")}
+              onTouchStart={(e) => handleResizeStart(e, "sw")}
             />
             <div
-              className={`absolute bottom-0 right-0 w-3.5 h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-se-resize rounded-full shadow-sm hover:scale-110 transition-transform`}
+              className={`absolute bottom-0 right-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-20 cursor-se-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
               style={{ transform: "translate(50%, 50%)" }}
               onMouseDown={(e) => handleResizeStart(e, "se")}
+              onTouchStart={(e) => handleResizeStart(e, "se")}
             />
           </>
         )}
@@ -419,13 +432,13 @@ export function ResizableImage({
                   {/* Alt Text Input */}
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="alt-text"
+                      htmlFor={altTextId}
                       className="text-xs font-semibold text-muted-foreground"
                     >
                       Alt Text
                     </Label>
                     <Input
-                      id="alt-text"
+                      id={altTextId}
                       value={alt}
                       onChange={(e) => setAlt(e.target.value)}
                       onBlur={() => updateAttributes({ alt: alt })}
@@ -437,13 +450,13 @@ export function ResizableImage({
                   {/* Title Input */}
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="title-text"
+                      htmlFor={titleTextId}
                       className="text-xs font-semibold text-muted-foreground"
                     >
                       Title Attribute
                     </Label>
                     <Input
-                      id="title-text"
+                      id={titleTextId}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       onBlur={() => updateAttributes({ title: title })}
