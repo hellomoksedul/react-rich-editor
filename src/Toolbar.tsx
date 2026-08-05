@@ -43,6 +43,13 @@ import { FaYoutube } from "react-icons/fa";
 import { cn } from "./lib/utils";
 import { Button } from "./ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -50,8 +57,13 @@ import {
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -181,10 +193,12 @@ export function Toolbar({
   };
 
   return (
-    <div className={cn(
-      "flex flex-wrap items-center gap-1 p-2 sticky top-0 z-20 backdrop-blur-sm max-w-full",
-      isSimple ? "bg-transparent" : "border-b border-border bg-muted/30"
-    )}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-1 p-2 sticky top-0 z-20 backdrop-blur-sm max-w-full",
+        isSimple ? "bg-transparent" : "border-b border-border bg-muted/30",
+      )}
+    >
       {/* 
         --------------------------------------------------------
         0. HISTORY (Moved to Start)
@@ -214,7 +228,7 @@ export function Toolbar({
       */}
       <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
         <Select value={getCurrentHeading()} onValueChange={handleHeadingChange}>
-          <SelectTrigger className="h-8 w-[130px]">
+          <SelectTrigger className="h-8 w-32.5">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -653,159 +667,159 @@ export function Toolbar({
       */}
       {!isSimple && (
         <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-8 w-8 p-0",
-                editor.isActive("link") && "bg-accent text-accent-foreground",
-              )}
-              title="Link"
-            >
-              <Link className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-60 p-2" align="start">
-            <div className="flex flex-col gap-2">
-              <div className="space-y-1">
-                <Input
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className="h-8 text-xs"
-                />
-                <Input
-                  value={linkTitle}
-                  onChange={(e) => setLinkTitle(e.target.value)}
-                  placeholder="Link title (optional)..."
-                  className="h-8 text-xs"
-                />
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 w-full"
-                onClick={() => {
-                  if (linkUrl) {
-                    editor
-                      .chain()
-                      .focus()
-                      .extendMarkRange("link")
-                      .setLink({ href: linkUrl, title: linkTitle } as any)
-                      .run();
-                    setLinkUrl("");
-                    setLinkTitle("");
-                  }
-                }}
-              >
-                Set Link
-              </Button>
-            </div>
-            {editor.isActive("link") && (
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="w-full mt-2 h-8 text-xs text-destructive hover:text-destructive"
-                onClick={() => editor.chain().focus().unsetLink().run()}
+                className={cn(
+                  "h-8 w-8 p-0",
+                  editor.isActive("link") && "bg-accent text-accent-foreground",
+                )}
+                title="Link"
               >
-                <Unlink className="h-3 w-3 mr-2" /> Remove Link
+                <Link className="h-4 w-4" />
               </Button>
-            )}
-          </PopoverContent>
-        </Popover>
-
-        <ToolbarButton onClick={() => onImageUpload?.()} title="Add Image">
-          <Image className="h-4 w-4" aria-label="Image" />
-        </ToolbarButton>
-        <Dialog open={isYoutubeOpen} onOpenChange={setIsYoutubeOpen}>
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Add YouTube Video"
-            >
-              <FaYoutube className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add YouTube Video</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">YouTube URL</label>
-                <Input
-                  value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
-                  placeholder="https://youtu.be/..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addYoutubeVideo();
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-2" align="start">
+              <div className="flex flex-col gap-2">
+                <div className="space-y-1">
+                  <Input
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    value={linkTitle}
+                    onChange={(e) => setLinkTitle(e.target.value)}
+                    placeholder="Link title (optional)..."
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 w-full"
+                  onClick={() => {
+                    if (linkUrl) {
+                      editor
+                        .chain()
+                        .focus()
+                        .extendMarkRange("link")
+                        .setLink({ href: linkUrl, title: linkTitle } as any)
+                        .run();
+                      setLinkUrl("");
+                      setLinkTitle("");
+                    }
                   }}
-                  autoFocus
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the video link above to embed it.
-                </p>
+                >
+                  Set Link
+                </Button>
               </div>
-              <Button type="button" onClick={addYoutubeVideo}>
-                Embed Video
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              {editor.isActive("link") && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 h-8 text-xs text-destructive hover:text-destructive"
+                  onClick={() => editor.chain().focus().unsetLink().run()}
+                >
+                  <Unlink className="h-3 w-3 mr-2" /> Remove Link
+                </Button>
+              )}
+            </PopoverContent>
+          </Popover>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-auto px-2"
-              title="Insert Items"
-            >
-              <Plus className="h-4 w-4" />
-              <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem
-              onClick={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                  .run()
-              }
-            >
-              <Table className="mr-2 h-4 w-4" />
-              <span>Table</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            >
-              <Quote className="mr-2 h-4 w-4" />
-              <span>Blockquote</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            >
-              <FileCode className="mr-2 h-4 w-4" />
-              <span>Code Block</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            >
-              <Minus className="mr-2 h-4 w-4" />
-              <span>Horizontal Rule</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          <ToolbarButton onClick={() => onImageUpload?.()} title="Add Image">
+            <Image className="h-4 w-4" aria-label="Image" />
+          </ToolbarButton>
+          <Dialog open={isYoutubeOpen} onOpenChange={setIsYoutubeOpen}>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Add YouTube Video"
+              >
+                <FaYoutube className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add YouTube Video</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">YouTube URL</label>
+                  <Input
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    placeholder="https://youtu.be/..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") addYoutubeVideo();
+                    }}
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the video link above to embed it.
+                  </p>
+                </div>
+                <Button type="button" onClick={addYoutubeVideo}>
+                  Embed Video
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-auto px-2"
+                title="Insert Items"
+              >
+                <Plus className="h-4 w-4" />
+                <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onClick={() =>
+                  editor
+                    .chain()
+                    .focus()
+                    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                    .run()
+                }
+              >
+                <Table className="mr-2 h-4 w-4" />
+                <span>Table</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              >
+                <Quote className="mr-2 h-4 w-4" />
+                <span>Blockquote</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              >
+                <FileCode className="mr-2 h-4 w-4" />
+                <span>Code Block</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              >
+                <Minus className="mr-2 h-4 w-4" />
+                <span>Horizontal Rule</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
 
       {/* 
@@ -815,44 +829,44 @@ export function Toolbar({
       */}
       {!isSimple && (
         <div className="flex items-center gap-0.5">
-        {/* Find & Replace */}
-        <ToolbarButton
-          onClick={() => setIsFindReplaceOpen(true)}
-          title="Find & Replace (Ctrl+F)"
-        >
-          <Search className="h-4 w-4" />
-        </ToolbarButton>
+          {/* Find & Replace */}
+          <ToolbarButton
+            onClick={() => setIsFindReplaceOpen(true)}
+            title="Find & Replace (Ctrl+F)"
+          >
+            <Search className="h-4 w-4" />
+          </ToolbarButton>
 
-        {/* Keyboard Shortcuts */}
-        <ToolbarButton
-          onClick={() => setIsShortcutsOpen(true)}
-          title="Keyboard Shortcuts"
-        >
-          <HelpCircle className="h-4 w-4" />
-        </ToolbarButton>
+          {/* Keyboard Shortcuts */}
+          <ToolbarButton
+            onClick={() => setIsShortcutsOpen(true)}
+            title="Keyboard Shortcuts"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-px h-6 bg-border mx-1" />
 
-        <ToolbarButton
-          onClick={() => setIsSourceMode(!isSourceMode)}
-          active={isSourceMode}
-          title="Source Code"
-        >
-          <CodeXml className="h-4 w-4" />
-        </ToolbarButton>
+          <ToolbarButton
+            onClick={() => setIsSourceMode(!isSourceMode)}
+            active={isSourceMode}
+            title="Source Code"
+          >
+            <CodeXml className="h-4 w-4" />
+          </ToolbarButton>
 
-        {showAiGenerator && (
-          <>
-            <div className="w-px h-6 bg-border mx-1" />
-            <ToolbarButton
-              onClick={() => setIsAiGeneratorOpen(true)}
-              title="AI Content Generator"
-            >
-              <Sparkles className="h-4 w-4 text-indigo-500" />
-            </ToolbarButton>
-          </>
-        )}
-      </div>
+          {showAiGenerator && (
+            <>
+              <div className="w-px h-6 bg-border mx-1" />
+              <ToolbarButton
+                onClick={() => setIsAiGeneratorOpen(true)}
+                title="AI Content Generator"
+              >
+                <Sparkles className="h-4 w-4 text-indigo-500" />
+              </ToolbarButton>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

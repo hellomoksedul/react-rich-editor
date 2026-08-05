@@ -1,4 +1,7 @@
-@source ".";
+@import "tailwindcss";
+@import "./editor-styles.css";
+@source "../src";
+
 :where(:root) {
   --background: #ffffff;
   --foreground: #09090b;
@@ -62,6 +65,3 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 }
-
-@import "tailwindcss";
-@import "./editor-styles.css";

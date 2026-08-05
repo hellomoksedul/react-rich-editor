@@ -1,5 +1,7 @@
 # @hellokit/react-rich-editor
 
+![React Rich Editor Screenshot](https://edge.moksedul.com/images/1785917017782-edited-image.webp)
+
 A full-featured, Tiptap-based rich text editor for React — the same editor used across [moksedul.com](https://moksedul.com), packaged as a standalone, installable component.
 
 - Rich formatting toolbar: headings, font size, text/highlight color, bold/italic/underline/strike/code, alignment, lists with indent, task list, blockquote, code block, horizontal rule
