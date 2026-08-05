@@ -145,7 +145,7 @@ export function ImageUploadDialog({
 
         {tab === "upload" && (
           <div
-            className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 px-4 py-10 text-center transition-colors hover:border-muted-foreground/40"
+            className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 px-4 py-16 min-h-[240px] text-center transition-colors hover:border-muted-foreground/40"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();

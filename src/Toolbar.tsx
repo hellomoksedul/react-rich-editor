@@ -50,6 +50,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface ToolbarProps {
@@ -361,7 +362,7 @@ export function Toolbar({
                         editor.chain().focus().setColor(e.target.value).run();
                         setIsTextColorOpen(false);
                       }}
-                      className="h-8 w-full p-0 border-0 cursor-pointer"
+                      className="h-8 w-full p-0 border border-border rounded-md cursor-pointer overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
                     />
                   </div>
                   <Input
@@ -444,7 +445,7 @@ export function Toolbar({
                           .run();
                         setIsHighlightOpen(false);
                       }}
-                      className="h-8 w-full p-0 border-0 cursor-pointer"
+                      className="h-8 w-full p-0 border border-border rounded-md cursor-pointer overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
                     />
                   </div>
                   <Input
@@ -720,8 +721,8 @@ export function Toolbar({
         <ToolbarButton onClick={() => onImageUpload?.()} title="Add Image">
           <Image className="h-4 w-4" aria-label="Image" />
         </ToolbarButton>
-        <Popover open={isYoutubeOpen} onOpenChange={setIsYoutubeOpen}>
-          <PopoverTrigger asChild>
+        <Dialog open={isYoutubeOpen} onOpenChange={setIsYoutubeOpen}>
+          <DialogTrigger asChild>
             <Button
               type="button"
               variant="ghost"
@@ -731,39 +732,33 @@ export function Toolbar({
             >
               <FaYoutube className="h-4 w-4" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-3" align="start">
-            <div className="flex flex-col gap-2">
-              <div className="space-y-1">
-                <h4 className="font-medium text-xs leading-none">
-                  YouTube URL
-                </h4>
-                <p className="text-[10px] text-muted-foreground">
-                  Enter the video link below.
-                </p>
-              </div>
-              <div className="flex gap-2">
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add YouTube Video</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">YouTube URL</label>
                 <Input
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtu.be/..."
-                  className="h-8 text-xs"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") addYoutubeVideo();
                   }}
+                  autoFocus
                 />
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={addYoutubeVideo}
-                >
-                  Embed
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Enter the video link above to embed it.
+                </p>
               </div>
+              <Button type="button" onClick={addYoutubeVideo}>
+                Embed Video
+              </Button>
             </div>
-          </PopoverContent>
-        </Popover>
+          </DialogContent>
+        </Dialog>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

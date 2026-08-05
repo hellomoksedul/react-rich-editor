@@ -25,7 +25,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./index.css": "./dist/index.css"
   },
   "files": [
     "dist"
@@ -34,10 +35,10 @@
     "**/*.css"
   ],
   "scripts": {
-    "build:css": "node scripts/build-css.cjs",
+    "build:css": "tailwindcss -i src/index.css -o dist/temp.css && node scripts/build-css.cjs",
     "build:js": "tsup",
-    "build": "node scripts/build-css.cjs && tsup",
-    "dev": "node scripts/build-css.cjs && tsup --watch",
+    "build": "pnpm run build:css && tsup",
+    "dev": "pnpm run build:css && tsup --watch",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
