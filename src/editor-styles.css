@@ -342,24 +342,16 @@
   cursor: col-resize;
 }
 
-/* Code Blocks (intentionally dark-themed regardless of light/dark mode, like a terminal) */
+/* Code Blocks (handled by CustomCodeBlock React NodeView) */
 .ProseMirror pre {
-  background: #1e293b;
-  color: #e2e8f0;
-  font-family: "Courier New", Courier, monospace;
-  padding: 1rem 1.25rem;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-  overflow-x: auto;
+  margin: 0;
 }
-
 .ProseMirror pre code {
   color: inherit;
   padding: 0;
   background: none;
   border: none;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: inherit;
 }
 
 /* Text Alignment */

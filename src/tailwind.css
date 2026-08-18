@@ -129,6 +129,13 @@
 /* Layout content grid fix */
 .hellokit-layout-content {
   width: 100%;
+  grid-template-columns: 1fr; /* Mobile fallback: single column */
+}
+
+@media (min-width: 768px) {
+  .hellokit-layout-content {
+    grid-template-columns: var(--layout-template, repeat(2, minmax(0, 1fr)));
+  }
 }
 
 .hellokit-layout-content > [data-node-view-content-react] {
@@ -154,8 +161,9 @@
 /* Lists */
 .ProseMirror ul,
 .ProseMirror ol {
-  padding-left: 1.5rem;
+  padding-left: 1.75rem;
   margin-bottom: 1rem;
+  display: flow-root; /* Establishes BFC to prevent bullets from overlapping floats */
 }
 
 .ProseMirror ul {
@@ -284,10 +292,15 @@
   min-width: 1em;
   border: 1px solid var(--border, #d1d5db);
   padding: 0.5rem 0.75rem;
-  vertical-align: top;
+  vertical-align: middle;
   box-sizing: border-box;
   position: relative;
   color: var(--foreground, inherit);
+}
+
+.ProseMirror td > *:last-child,
+.ProseMirror th > *:last-child {
+  margin-bottom: 0;
 }
 
 .ProseMirror th {
@@ -330,24 +343,16 @@
   cursor: col-resize;
 }
 
-/* Code Blocks (intentionally dark-themed regardless of light/dark mode, like a terminal) */
+/* Code Blocks (handled by CustomCodeBlock React NodeView) */
 .ProseMirror pre {
-  background: #1e293b;
-  color: #e2e8f0;
-  font-family: "Courier New", Courier, monospace;
-  padding: 1rem 1.25rem;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-  overflow-x: auto;
+  margin: 0;
 }
-
 .ProseMirror pre code {
   color: inherit;
   padding: 0;
   background: none;
   border: none;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: inherit;
 }
 
 /* Text Alignment */

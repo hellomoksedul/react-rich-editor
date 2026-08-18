@@ -9,11 +9,12 @@ export interface EditorDialogProps {
   description?: ReactNode;
   children: ReactNode;
   className?: string;
+  modal?: boolean;
 }
 
-export function EditorDialog({ open, onOpenChange, title, description, children, className }: EditorDialogProps) {
+export function EditorDialog({ open, onOpenChange, title, description, children, className, modal }: EditorDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={modal}>
       <DialogContent className={className || "sm:max-w-130"}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

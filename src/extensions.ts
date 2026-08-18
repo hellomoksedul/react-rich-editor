@@ -36,6 +36,7 @@ import { FontWeight } from "./FontWeightExtension";
 import { ResizableImage } from "./ResizableImage";
 import { ResizableYoutube } from "./ResizableYoutube";
 import { SlashCommand, type SlashCommandOptions } from "./SlashCommand";
+import { CustomCodeBlock } from "./CodeBlockExtension";
 
 /** One entry in the table of contents, as reported by the TableOfContents
  * extension's onUpdate callback. Re-exported so consumers (e.g. Toolbar)
@@ -60,6 +61,7 @@ export const getEditorExtensions = (
     // disable StarterKit's bundled defaults to avoid duplicate registration.
     link: false,
     underline: false,
+    codeBlock: false,
     heading: {
       levels: [1, 2, 3, 4, 5, 6],
     },
@@ -199,6 +201,7 @@ export const getEditorExtensions = (
     nocookie: true,
   }),
   ButtonBlock,
+  CustomCodeBlock,
   ChartBlock,
   LayoutGroup,
   LayoutItem,

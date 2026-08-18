@@ -1195,6 +1195,14 @@ export function Toolbar({
             <div className="w-px h-6 bg-border mx-1" />
 
             <ToolbarButton
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              active={editor.isActive("codeBlock")}
+              title="Code Block"
+            >
+              <FileCode className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
               onClick={() => setIsPreviewOpen(true)}
               title="Preview"
             >
