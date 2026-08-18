@@ -6,13 +6,15 @@ A full-featured, Tiptap-based rich text editor for React — the same editor use
 
 - Rich formatting toolbar: headings, font size, font weight (including a normal-weight override for headings), text/highlight color, bold/italic/underline/strike/code/subscript/superscript, alignment, lists with indent, task list, blockquote, code block, horizontal rule
 - Automatic "smart" typography (straight quotes → curly quotes, `--` → em dash, `...` → ellipsis, etc.)
-- Slash command menu (`/`) for quick-inserting blocks, filterable as you type
+- Slash command menu (`/`) for quick-inserting blocks, filterable as you type, grouped into Editorial / Blocks / Patterns categories (same grouping as the toolbar's Insert menu)
 - Resizable, alignable images (drag handles, block/inline display, alt/title)
 - Resizable, alignable YouTube embeds
 - Tables with a bubble menu (add/remove rows & columns, cell background color, merge/split)
+- Advanced blocks: **Button** (CTA with its own contextual toolbar — filled/outline, alignment, corner radius, color, link, duplicate/delete), **Equation** (LaTeX, rendered with KaTeX, with a symbol palette), **Chart** (bar/horizontal-bar/grouped-bar/line/pie/donut, with a full data-point editor), **Columns** (2–3 column layouts with a layout switcher), **File Upload** (downloadable attachments), **Signature** (draw-and-insert, via a canvas pad)
+- **FAQ** pattern — a canned Q&A outline insertion (under the Insert menu's Patterns category)
 - Table of Contents popover — jump to any heading, tracks which section you're currently in
 - Find & Replace (`Ctrl+F`), Insert Link (`Ctrl+K`), Horizontal Rule (`Ctrl+Shift+H`), Keyboard Shortcuts reference, HTML source mode
-- Pluggable image upload and AI content generation
+- Pluggable image upload, file upload, and AI content generation
 - Word / character count and reading time
 
 ## Installation
@@ -123,6 +125,16 @@ Tailwind v3 (`tailwind.config.js` + globals.css): define the same `--background`
 
 Optional: install [`tailwindcss-animate`](https://github.com/jamiebuilds/tailwindcss-animate) (v3) or [`tw-animate-css`](https://github.com/Wombosvideo/tw-animate-css) (v4) for the dialog/popover fade & zoom animations. Everything works without it, just without the transition.
 
+### Equation block setup (required for KaTeX styling)
+
+The Equation block renders LaTeX with [KaTeX](https://katex.org/). Import KaTeX's stylesheet once in your app (it ships as a dependency of this package, so no extra install is needed):
+
+```ts
+import "katex/dist/katex.min.css";
+```
+
+Without it, equations still render but without KaTeX's font/spacing rules, so the math will look unstyled. Note that saved/exported HTML (`editor.getHTML()`) stores the raw LaTeX source rather than pre-rendered markup — re-rendering it elsewhere (outside this editor) requires running it through KaTeX again yourself.
+
 ## Usage
 
 ```tsx
@@ -156,6 +168,7 @@ export default function Editor() {
 | `onImageUpload`    | `(file: File) => Promise<string>`             | —                    | Upload a picked/dropped/pasted image and resolve its public URL. Used by the toolbar/slash "Image" action, the Upload dialog, and dragging or pasting an image directly onto the editor. Without it, images are embedded as base64 data URLs. |
 | `onListMedia`      | `() => Promise<MediaItem[]>`                  | —                    | Fetch previously uploaded media for the image dialog's Library tab. Without it, the Library tab is hidden. `MediaItem` is `{ url, name?, type?: "image" \| "video" }`. |
 | `onAiGenerate`     | `(prompt: string) => Promise<string>`         | —                    | Handle an AI content generation request (return raw HTML). Without it, the AI Generator button is hidden. |
+| `onFileUpload`     | `(file: File) => Promise<string>`             | —                    | Upload a picked/dropped file (any type) for the "Upload File" block and resolve its public URL. Without it, files are embedded as base64 data URLs — fine for small files, but a real backend is recommended for anything larger. |
 
 ### Inserting images
 
@@ -249,7 +262,17 @@ If your backend uses a presigned-URL flow (e.g. Cloudflare R2 / S3, matching the
 
 ### Slash command menu
 
-Type `/` at the start of an empty line to open a quick-insert menu (Text, Heading 1–3, Bullet/Numbered/Task List, Blockquote, Code Block, Table, Horizontal Rule, and Image when `onImageUpload` is configured). Filter by typing after `/`, navigate with arrow keys, select with Enter, dismiss with Escape.
+Type `/` at the start of an empty line to open a quick-insert menu, grouped into **Editorial** (Text, Headings, Lists, Task List, Blockquote, Code Block, Equation), **Blocks** (Table, Horizontal Rule, Image, YouTube, Button, Chart, 2/3 Columns, Upload File, Signature — the last two only when their respective `onFileUpload`/signature callbacks are wired up), and **Patterns** (FAQ). Filter by typing after `/` (search cuts across categories), navigate with arrow keys, select with Enter, dismiss with Escape. The toolbar's Insert (+) dropdown mirrors the same categories.
+
+### Advanced blocks
+
+- **Button** — a CTA with real editable text content. Select it to get a contextual toolbar: Filled/Outline, alignment, corner radius, color, link (URL), duplicate, delete.
+- **Equation** — click to open a LaTeX editor with a symbol palette and live KaTeX preview. See "Equation block setup" above for the required CSS import.
+- **Chart** — bar / horizontal bar / grouped bar / line / pie / donut, via [Recharts](https://recharts.org/). Hover to reveal an "Edit Chart" overlay with a full data-point editor (label/value/color rows, add/remove, chart type, title).
+- **Columns** — a 2 or 3 column layout (`ColumnGroup` + `Column` nodes). Each column accepts normal block content — use `/` or the toolbar's Insert menu with the cursor inside a column, same as anywhere else. Select anywhere inside to get a layout switcher (only showing variants matching the current column count) and a delete-group button. Column count/drag-resize isn't supported in v1 — switch layout via the icon/label picker instead.
+- **File Upload** — inserts a downloadable attachment (any file type), resolved through `onFileUpload` (or embedded as base64 without it).
+- **Signature** — a draw-your-signature canvas pad (via [signature_pad](https://github.com/szimek/signature_pad)); on save, it's inserted as a regular (resizable) image.
+- **FAQ** (Patterns category) — inserts a canned, fully-editable Q&A outline (heading + paragraph pairs) rather than a new node type — no locked-in structure to fight if you want to restyle or restructure it.
 
 ### Other exports
 
@@ -259,11 +282,30 @@ import {
   SlashCommand, // the slash-command Tiptap extension, if building a custom extension list
   htmlToMarkdown,
   markdownToHtml,
+  ButtonBlock,
+  ButtonBlockMenu,
+  Equation,
+  EquationEditDialog,
+  ChartBlock,
+  EditChartDialog,
+  ColumnGroup,
+  Column,
+  ColumnsMenu,
+  FileAttachment,
+  FileUploadDialog,
+  SignatureDialog,
 } from "@hellokit/react-rich-editor";
-import type { MediaItem, TocItem } from "@hellokit/react-rich-editor";
+import type {
+  MediaItem,
+  TocItem,
+  FileAttachmentMeta,
+  ChartType,
+  ChartDataPoint,
+  ColumnsLayout,
+} from "@hellokit/react-rich-editor";
 ```
 
-`getEditorExtensions(placeholder, options)` also accepts an `onTocUpdate?: (items: TocItem[]) => void` option if you're building a custom editor/toolbar and want to power your own Table of Contents UI — this is exactly how the built-in Toolbar's table-of-contents popover is implemented.
+`getEditorExtensions(placeholder, options)` also accepts an `onTocUpdate?: (items: TocItem[]) => void` option if you're building a custom editor/toolbar and want to power your own Table of Contents UI — this is exactly how the built-in Toolbar's table-of-contents popover is implemented. `options.onFileCommand?: () => void` and `options.onSignatureCommand?: () => void` work the same way for a custom Upload File / Signature UI.
 
 ## Next.js
 

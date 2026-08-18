@@ -5,11 +5,15 @@ import "prismjs/themes/prism-tomorrow.css";
 import { useEffect, useRef, useState } from "react";
 import CodeEditor from "react-simple-code-editor";
 import { AiGenerator } from "./AiGenerator";
+import { ButtonBlockMenu } from "./ButtonBlockMenu";
+import { ColumnsMenu } from "./ColumnsMenu";
 import { getEditorExtensions, type TocItem } from "./extensions";
+import { FileUploadDialog } from "./FileUploadDialog";
 import { FindReplace } from "./FindReplace";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
+import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
 import { Toolbar } from "./Toolbar";
@@ -24,6 +28,10 @@ export interface RichTextEditorProps {
   onImageUpload?: (file: File) => Promise<string>;
   onListMedia?: () => Promise<MediaItem[]>;
   onAiGenerate?: (prompt: string) => Promise<string>;
+  /** Upload a picked/dropped file (any type) for the "Upload File" block.
+   * Without it, files are embedded as base64 data URLs — fine for small
+   * files, but a real backend is recommended for anything larger. */
+  onFileUpload?: (file: File) => Promise<string>;
 }
 
 export function RichTextEditor({
@@ -36,8 +44,11 @@ export function RichTextEditor({
   onImageUpload,
   onListMedia,
   onAiGenerate,
+  onFileUpload,
 }: RichTextEditorProps) {
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
+  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
+  const [isSignatureOpen, setIsSignatureOpen] = useState(false);
   const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
@@ -79,6 +90,8 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, {
       onImageCommand: () => setIsImageManagerOpen(true),
+      onFileCommand: () => setIsFileManagerOpen(true),
+      onSignatureCommand: () => setIsSignatureOpen(true),
       onTocUpdate: (items) => setTocItems(items),
     }),
     content: value,
@@ -206,6 +219,15 @@ export function RichTextEditor({
     }
   };
 
+  const handleFileSelect = (attrs: { url: string; name: string; size: number }) => {
+    editor?.chain().focus().setFileAttachment(attrs).run();
+  };
+
+  const handleSignatureSave = (dataUrl: string) => {
+    editor?.chain().focus().setImage({ src: dataUrl }).run();
+    setIsSignatureOpen(false);
+  };
+
   const toggleSourceMode = (mode: boolean) => {
     if (mode) {
       // Switching TO Source Mode
@@ -241,6 +263,8 @@ export function RichTextEditor({
           <Toolbar
             editor={editor}
             onImageUpload={handleImageUpload}
+            onFileUpload={() => setIsFileManagerOpen(true)}
+            onSignature={() => setIsSignatureOpen(true)}
             isFindReplaceOpen={isFindReplaceOpen}
             setIsFindReplaceOpen={setIsFindReplaceOpen}
             isShortcutsOpen={isShortcutsOpen}
@@ -284,6 +308,8 @@ export function RichTextEditor({
         ) : (
           <>
             <TableBubbleMenu editor={editor} />
+            <ButtonBlockMenu editor={editor} />
+            <ColumnsMenu editor={editor} />
             <div className="relative w-full min-h-125 max-h-200 overflow-y-auto">
               <EditorContent editor={editor} />
             </div>
@@ -294,6 +320,8 @@ export function RichTextEditor({
           <Toolbar
             editor={editor}
             onImageUpload={handleImageUpload}
+            onFileUpload={() => setIsFileManagerOpen(true)}
+            onSignature={() => setIsSignatureOpen(true)}
             isFindReplaceOpen={isFindReplaceOpen}
             setIsFindReplaceOpen={setIsFindReplaceOpen}
             isShortcutsOpen={isShortcutsOpen}
@@ -343,6 +371,23 @@ export function RichTextEditor({
             onSelect={handleImageSelect}
             onImageUpload={onImageUpload}
             onListMedia={onListMedia}
+          />
+        )}
+
+        {isFileManagerOpen && (
+          <FileUploadDialog
+            isOpen={isFileManagerOpen}
+            onClose={() => setIsFileManagerOpen(false)}
+            onSelect={handleFileSelect}
+            onFileUpload={onFileUpload}
+          />
+        )}
+
+        {isSignatureOpen && (
+          <SignatureDialog
+            isOpen={isSignatureOpen}
+            onClose={() => setIsSignatureOpen(false)}
+            onSave={handleSignatureSave}
           />
         )}
       </div>

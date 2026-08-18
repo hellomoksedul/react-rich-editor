@@ -6,11 +6,14 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  BarChart3,
+  Blocks,
   Bold,
   CheckSquare,
   ChevronDown,
   Code,
   CodeXml,
+  Columns,
   Eraser,
   FileCode,
   HelpCircle,
@@ -24,13 +27,18 @@ import {
   ListTree,
   Minus,
   MoreHorizontal,
+  MousePointerClick,
   Outdent,
   Palette,
+  Paperclip,
+  PenLine,
+  PenTool,
   Plus,
   Quote,
   Redo,
   RemoveFormatting,
   Search,
+  Sigma,
   Sparkles,
   Strikethrough,
   Subscript,
@@ -45,6 +53,7 @@ import { FaYoutube } from "react-icons/fa";
 
 import type { TocItem } from "./extensions";
 import { cn } from "./lib/utils";
+import { FAQ_PATTERN_CONTENT } from "./SlashCommand";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -57,6 +66,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
@@ -78,6 +91,8 @@ import {
 interface ToolbarProps {
   editor: Editor | null;
   onImageUpload?: () => void;
+  onFileUpload?: () => void;
+  onSignature?: () => void;
   isFindReplaceOpen: boolean;
   setIsFindReplaceOpen: (open: boolean) => void;
   isShortcutsOpen: boolean;
@@ -171,6 +186,8 @@ function getEffectiveFontSize(editor: Editor): number {
 export function Toolbar({
   editor,
   onImageUpload,
+  onFileUpload,
+  onSignature,
   setIsFindReplaceOpen,
   setIsShortcutsOpen,
   setIsAiGeneratorOpen,
@@ -949,32 +966,108 @@ export function Toolbar({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor
-                      .chain()
-                      .focus()
-                      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                      .run()
-                  }
-                >
-                  <Table className="mr-2 h-4 w-4" />
-                  <span>Table</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    editor.chain().focus().toggleBlockquote().run()
-                  }
-                >
-                  <Quote className="mr-2 h-4 w-4" />
-                  <span>Blockquote</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                >
-                  <FileCode className="mr-2 h-4 w-4" />
-                  <span>Code Block</span>
-                </DropdownMenuItem>
+                {/* Editorial: text-authoring elements (headings/lists/task
+                    list live on their own toolbar controls already, so this
+                    submenu only covers what previously lived flat here). */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <PenLine className="mr-2 h-4 w-4" />
+                    <span>Editorial</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        editor.chain().focus().toggleBlockquote().run()
+                      }
+                    >
+                      <Quote className="mr-2 h-4 w-4" />
+                      <span>Blockquote</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        editor.chain().focus().toggleCodeBlock().run()
+                      }
+                    >
+                      <FileCode className="mr-2 h-4 w-4" />
+                      <span>Code Block</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => editor.chain().focus().setEquation().run()}
+                    >
+                      <Sigma className="mr-2 h-4 w-4" />
+                      <span>Equation</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                {/* Blocks: structural/media units. More block types (Button,
+                    Chart, Columns, File Upload, Signature) land here in
+                    later phases. */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Blocks className="mr-2 h-4 w-4" />
+                    <span>Blocks</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        editor
+                          .chain()
+                          .focus()
+                          .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                          .run()
+                      }
+                    >
+                      <Table className="mr-2 h-4 w-4" />
+                      <span>Table</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => editor.chain().focus().setButtonBlock().run()}
+                    >
+                      <MousePointerClick className="mr-2 h-4 w-4" />
+                      <span>Button</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => editor.chain().focus().setChartBlock().run()}
+                    >
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      <span>Chart</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => editor.chain().focus().setColumns(2).run()}
+                    >
+                      <Columns className="mr-2 h-4 w-4" />
+                      <span>2 Columns</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => editor.chain().focus().setColumns(3).run()}
+                    >
+                      <Columns className="mr-2 h-4 w-4" />
+                      <span>3 Columns</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                {/* Patterns: pre-built canned insertions built from existing
+                    node types (no new schema). */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Patterns</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        editor.chain().focus().insertContent(FAQ_PATTERN_CONTENT).run()
+                      }
+                    >
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>FAQ</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() =>
                     editor.chain().focus().setHorizontalRule().run()
@@ -983,6 +1076,18 @@ export function Toolbar({
                   <Minus className="mr-2 h-4 w-4" />
                   <span>Horizontal Rule</span>
                 </DropdownMenuItem>
+                {onFileUpload && (
+                  <DropdownMenuItem onClick={() => onFileUpload()}>
+                    <Paperclip className="mr-2 h-4 w-4" />
+                    <span>Upload File</span>
+                  </DropdownMenuItem>
+                )}
+                {onSignature && (
+                  <DropdownMenuItem onClick={() => onSignature()}>
+                    <PenTool className="mr-2 h-4 w-4" />
+                    <span>Signature</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -26,6 +26,11 @@ import Youtube from "@tiptap/extension-youtube";
 import StarterKit from "@tiptap/starter-kit";
 
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { ButtonBlock } from "./ButtonBlockExtension";
+import { ChartBlock } from "./ChartBlockExtension";
+import { Column, ColumnGroup } from "./ColumnsExtension";
+import { Equation } from "./EquationExtension";
+import { FileAttachment } from "./FileAttachmentExtension";
 import { FontSize } from "./FontSizeExtension";
 import { FontWeight } from "./FontWeightExtension";
 import { ResizableImage } from "./ResizableImage";
@@ -193,8 +198,16 @@ export const getEditorExtensions = (
     controls: false,
     nocookie: true,
   }),
+  ButtonBlock,
+  ChartBlock,
+  ColumnGroup,
+  Column,
+  Equation,
+  FileAttachment,
   SlashCommand.configure({
     onImageCommand: options.onImageCommand,
     onYoutubeCommand: options.onYoutubeCommand,
+    onFileCommand: options.onFileCommand,
+    onSignatureCommand: options.onSignatureCommand,
   }),
 ];
