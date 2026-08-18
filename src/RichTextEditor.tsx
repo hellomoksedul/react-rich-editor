@@ -5,14 +5,14 @@ import "prismjs/themes/prism-tomorrow.css";
 import { useEffect, useRef, useState } from "react";
 import CodeEditor from "react-simple-code-editor";
 import { AiGenerator } from "./AiGenerator";
-import { getEditorExtensions } from "./extensions";
+import { getEditorExtensions, type TocItem } from "./extensions";
 import { FindReplace } from "./FindReplace";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
+import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
 import { Toolbar } from "./Toolbar";
-import { StyleInjector } from "./StyleInjector";
 
 export interface RichTextEditorProps {
   value?: string;
@@ -41,9 +41,11 @@ export function RichTextEditor({
   const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
   const [isSourceMode, setIsSourceMode] = useState(false);
   const [selectedTextForSearch, setSelectedTextForSearch] = useState("");
   const [sourceCode, setSourceCode] = useState("");
+  const [tocItems, setTocItems] = useState<TocItem[]>([]);
 
   // Kept fresh via effect below so the drop/paste handlers below (captured
   // once by useEditor) always call the latest onImageUpload prop.
@@ -52,7 +54,11 @@ export function RichTextEditor({
     onImageUploadRef.current = onImageUpload;
   }, [onImageUpload]);
 
-  const insertImagesAt = (view: import("@tiptap/pm/view").EditorView, files: File[], startPos: number) => {
+  const insertImagesAt = (
+    view: import("@tiptap/pm/view").EditorView,
+    files: File[],
+    startPos: number,
+  ) => {
     let pos = startPos;
     void (async () => {
       for (const file of files) {
@@ -73,6 +79,7 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, {
       onImageCommand: () => setIsImageManagerOpen(true),
+      onTocUpdate: (items) => setTocItems(items),
     }),
     content: value,
     immediatelyRender: false,
@@ -82,10 +89,16 @@ export function RichTextEditor({
       },
       handleDrop: (view, event, _slice, moved) => {
         if (moved) return false;
-        const files = Array.from(event.dataTransfer?.files ?? []).filter((f) =>
-          f.type.startsWith("image/"),
-        );
-        if (files.length === 0) return false;
+        const allFiles = Array.from(event.dataTransfer?.files ?? []);
+        const files = allFiles.filter((f) => f.type.startsWith("image/"));
+        if (files.length === 0) {
+          // Non-image files (PDFs, docs, video, ...) aren't supported yet —
+          // block the browser's default handling (which otherwise tends to
+          // navigate the tab to the dropped file) instead of silently doing
+          // nothing that also lets the browser do something worse.
+          if (allFiles.length > 0) event.preventDefault();
+          return false;
+        }
         event.preventDefault();
         const coords = { left: event.clientX, top: event.clientY };
         const pos = view.posAtCoords(coords)?.pos ?? view.state.selection.from;
@@ -93,8 +106,11 @@ export function RichTextEditor({
         return true;
       },
       handlePaste: (view, event) => {
-        const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
-          f.type.startsWith("image/"),
+        // Unlike drop, a plain paste can't navigate the tab away, so a
+        // non-image file here is left to ProseMirror's normal paste
+        // handling (returning false) rather than pre-empted.
+        const files = Array.from(event.clipboardData?.files ?? []).filter(
+          (f) => f.type.startsWith("image/"),
         );
         if (files.length === 0) return false;
         event.preventDefault();
@@ -120,10 +136,31 @@ export function RichTextEditor({
     }
   }, [value, editor]);
 
-  // Handle Ctrl+F keyboard shortcut
+  // Chrome/Edge (and some other Blink/WebKit browsers) draw their own native
+  // resize handles + selection outline around <img>/<table> elements inside
+  // a contenteditable region. That native box is what shows up as the extra
+  // outer border around images/tables — separate from (and larger than) our
+  // custom ResizableImage selection frame. Disabling it here so only our own
+  // handles are visible.
+  useEffect(() => {
+    if (!editor) return;
+    try {
+      document.execCommand("enableObjectResizing", false, false as any);
+      document.execCommand("enableInlineTableEditing", false, false as any);
+    } catch {
+      // Deprecated API, unsupported (or throws) in some browsers — safe to ignore.
+    }
+  }, [editor]);
+
+  // Handle Ctrl+F (Find & Replace), Ctrl+K (Insert Link) and Ctrl+Shift+H
+  // (Horizontal Rule) keyboard shortcuts. These are exactly the shortcuts
+  // advertised in the KeyboardShortcuts modal — Ctrl+K and Ctrl+Shift+H used
+  // to be listed there but weren't wired up anywhere (neither the Link nor
+  // the HorizontalRule Tiptap extensions ship a default keybinding for them),
+  // so they silently did nothing.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
 
         // Get selected text if any
@@ -134,12 +171,30 @@ export function RichTextEditor({
         }
 
         setIsFindReplaceOpen(true);
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsLinkPopoverOpen(true);
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "h") {
+        e.preventDefault();
+        editor?.chain().focus().setHorizontalRule().run();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editor]);
+
+  const handleTocNavigate = (item: TocItem) => {
+    if (!editor) return;
+    editor.chain().focus().setTextSelection(item.pos).run();
+    item.dom?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const handleImageUpload = () => {
     setIsImageManagerOpen(true);
@@ -166,7 +221,7 @@ export function RichTextEditor({
 
   if (!editor) {
     return (
-      <div className="flex h-[400px] items-center justify-center border border-border rounded-md">
+      <div className="flex h-100 items-center justify-center border border-border rounded-md">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -175,7 +230,13 @@ export function RichTextEditor({
   return (
     <div className="space-y-4 hellokit-editor-scope">
       <StyleInjector />
-      <div className={className ? className : "border border-border rounded-md overflow-hidden"}>
+      <div
+        className={
+          className
+            ? className
+            : "bg-background text-foreground border border-border rounded-md overflow-hidden"
+        }
+      >
         {toolbarPosition === "top" && (
           <Toolbar
             editor={editor}
@@ -186,25 +247,34 @@ export function RichTextEditor({
             setIsShortcutsOpen={setIsShortcutsOpen}
             isAiGeneratorOpen={isAiGeneratorOpen}
             setIsAiGeneratorOpen={setIsAiGeneratorOpen}
+            isLinkPopoverOpen={isLinkPopoverOpen}
+            setIsLinkPopoverOpen={setIsLinkPopoverOpen}
             isSourceMode={isSourceMode}
             setIsSourceMode={toggleSourceMode}
             isSimple={isSimple}
             showAiGenerator={!!onAiGenerate}
+            tocItems={tocItems}
+            onTocNavigate={handleTocNavigate}
           />
         )}
 
         {isSourceMode ? (
-          <div className="relative w-full h-[500px] 2xl:h-[600px] bg-[#2d2d2d] overflow-y-auto border-t border-border">
+          <div className="relative w-full min-h-125 max-h-200 bg-[#2d2d2d] overflow-y-auto border-t border-border">
             <CodeEditor
               value={sourceCode}
               onValueChange={(code) => setSourceCode(code)}
               highlight={(code) =>
-                Prism.highlight(code, Prism.languages.html || Prism.languages.markup, "html")
+                Prism.highlight(
+                  code,
+                  Prism.languages.html || Prism.languages.markup,
+                  "html",
+                )
               }
               padding={16}
               textareaClassName="focus:outline-none"
               style={{
-                fontFamily: '"Fira Code", "JetBrains Mono", Consolas, monospace',
+                fontFamily:
+                  '"Fira Code", "JetBrains Mono", Consolas, monospace',
                 fontSize: 14,
                 minHeight: "100%",
                 color: "#f8f8f2",
@@ -214,7 +284,7 @@ export function RichTextEditor({
         ) : (
           <>
             <TableBubbleMenu editor={editor} />
-            <div className="relative w-full min-h-[500px] max-h-[800px] overflow-y-auto">
+            <div className="relative w-full min-h-125 max-h-200 overflow-y-auto">
               <EditorContent editor={editor} />
             </div>
           </>
@@ -230,10 +300,14 @@ export function RichTextEditor({
             setIsShortcutsOpen={setIsShortcutsOpen}
             isAiGeneratorOpen={isAiGeneratorOpen}
             setIsAiGeneratorOpen={setIsAiGeneratorOpen}
+            isLinkPopoverOpen={isLinkPopoverOpen}
+            setIsLinkPopoverOpen={setIsLinkPopoverOpen}
             isSourceMode={isSourceMode}
             setIsSourceMode={toggleSourceMode}
             isSimple={isSimple}
             showAiGenerator={!!onAiGenerate}
+            tocItems={tocItems}
+            onTocNavigate={handleTocNavigate}
           />
         )}
 
@@ -241,16 +315,22 @@ export function RichTextEditor({
         {!isSimple && (
           <div className="border-t border-border px-4 py-2 bg-muted/20 text-xs text-muted-foreground flex items-center gap-4">
             <span>
-              Words: <strong className="text-foreground">{editor.storage.characterCount?.words() || 0}</strong>
+              Words:{" "}
+              <strong className="text-foreground">
+                {editor.storage.characterCount?.words() || 0}
+              </strong>
             </span>
             <span>
               Characters:{" "}
-              <strong className="text-foreground">{editor.storage.characterCount?.characters() || 0}</strong>
+              <strong className="text-foreground">
+                {editor.storage.characterCount?.characters() || 0}
+              </strong>
             </span>
             <span>
               Reading time:{" "}
               <strong className="text-foreground">
-                {Math.ceil((editor.storage.characterCount?.words() || 0) / 200)} min
+                {Math.ceil((editor.storage.characterCount?.words() || 0) / 200)}{" "}
+                min
               </strong>
             </span>
           </div>
@@ -276,7 +356,12 @@ export function RichTextEditor({
       />
 
       {/* Keyboard Shortcuts Modal */}
-      {!isSimple && <KeyboardShortcuts isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />}
+      {!isSimple && (
+        <KeyboardShortcuts
+          isOpen={isShortcutsOpen}
+          onClose={() => setIsShortcutsOpen(false)}
+        />
+      )}
 
       {!isSimple && onAiGenerate && (
         <AiGenerator

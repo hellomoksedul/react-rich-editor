@@ -16,6 +16,8 @@ const shortcuts = [
       { keys: "Ctrl + U", action: "Underline" },
       { keys: "Ctrl + Shift + X", action: "Strikethrough" },
       { keys: "Ctrl + E", action: "Inline Code" },
+      { keys: "Ctrl + ,", action: "Subscript" },
+      { keys: "Ctrl + .", action: "Superscript" },
     ],
   },
   {

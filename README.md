@@ -4,12 +4,14 @@
 
 A full-featured, Tiptap-based rich text editor for React — the same editor used across [moksedul.com](https://moksedul.com), packaged as a standalone, installable component.
 
-- Rich formatting toolbar: headings, font size, text/highlight color, bold/italic/underline/strike/code, alignment, lists with indent, task list, blockquote, code block, horizontal rule
+- Rich formatting toolbar: headings, font size, font weight (including a normal-weight override for headings), text/highlight color, bold/italic/underline/strike/code/subscript/superscript, alignment, lists with indent, task list, blockquote, code block, horizontal rule
+- Automatic "smart" typography (straight quotes → curly quotes, `--` → em dash, `...` → ellipsis, etc.)
 - Slash command menu (`/`) for quick-inserting blocks, filterable as you type
 - Resizable, alignable images (drag handles, block/inline display, alt/title)
 - Resizable, alignable YouTube embeds
 - Tables with a bubble menu (add/remove rows & columns, cell background color, merge/split)
-- Find & Replace (`Ctrl+F`), Keyboard Shortcuts reference, HTML source mode
+- Table of Contents popover — jump to any heading, tracks which section you're currently in
+- Find & Replace (`Ctrl+F`), Insert Link (`Ctrl+K`), Horizontal Rule (`Ctrl+Shift+H`), Keyboard Shortcuts reference, HTML source mode
 - Pluggable image upload and AI content generation
 - Word / character count and reading time
 
@@ -258,8 +260,10 @@ import {
   htmlToMarkdown,
   markdownToHtml,
 } from "@hellokit/react-rich-editor";
-import type { MediaItem } from "@hellokit/react-rich-editor";
+import type { MediaItem, TocItem } from "@hellokit/react-rich-editor";
 ```
+
+`getEditorExtensions(placeholder, options)` also accepts an `onTocUpdate?: (items: TocItem[]) => void` option if you're building a custom editor/toolbar and want to power your own Table of Contents UI — this is exactly how the built-in Toolbar's table-of-contents popover is implemented.
 
 ## Next.js
 

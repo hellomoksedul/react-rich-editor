@@ -1,8 +1,14 @@
-import { FolderOpen, ImagePlus, Link2, Loader2, Video as VideoIcon } from "lucide-react";
+import {
+  FolderOpen,
+  ImagePlus,
+  Link2,
+  Loader2,
+  Video as VideoIcon,
+} from "lucide-react";
 import { useRef, useState } from "react";
 
-import { cn } from "./lib/utils";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
+import { cn } from "./lib/utils";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
@@ -11,16 +17,7 @@ export interface ImageUploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (url: string) => void;
-  /**
-   * Handle the actual upload (e.g. to S3/R2/Cloudinary) and resolve the
-   * final public URL. When omitted, the picked file is embedded as a
-   * base64 data URL instead.
-   */
   onImageUpload?: (file: File) => Promise<string>;
-  /**
-   * Fetch previously uploaded media so the user can insert from a library
-   * instead of uploading a new file. When omitted, the Library tab is hidden.
-   */
   onListMedia?: () => Promise<MediaItem[]>;
 }
 
@@ -94,7 +91,7 @@ export function ImageUploadDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-130">
         <DialogHeader>
           <DialogTitle>Add Image</DialogTitle>
         </DialogHeader>
@@ -145,7 +142,7 @@ export function ImageUploadDialog({
 
         {tab === "upload" && (
           <div
-            className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 px-4 py-16 min-h-[240px] text-center transition-colors hover:border-muted-foreground/40"
+            className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 px-4 py-16 min-h-60 text-center transition-colors hover:border-muted-foreground/40"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -185,15 +182,19 @@ export function ImageUploadDialog({
         )}
 
         {tab === "library" && (
-          <div className="max-h-72 overflow-y-auto">
+          <div className="max-h-72 overflow-y-auto hellokit-scrollbar">
             {isLibraryLoading ? (
               <div className="flex items-center justify-center py-10">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : libraryError ? (
-              <p className="py-6 text-center text-sm text-destructive">{libraryError}</p>
+              <p className="py-6 text-center text-sm text-destructive">
+                {libraryError}
+              </p>
             ) : !libraryItems || libraryItems.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No media found.</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No media found.
+              </p>
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {libraryItems.map((item) => (
@@ -213,7 +214,11 @@ export function ImageUploadDialog({
                       </div>
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.url} alt={item.name || ""} className="h-full w-full object-cover" />
+                      <img
+                        src={item.url}
+                        alt={item.name || ""}
+                        className="h-full w-full object-cover"
+                      />
                     )}
                   </button>
                 ))}
@@ -233,7 +238,11 @@ export function ImageUploadDialog({
               }}
               autoFocus
             />
-            <Button type="button" onClick={handleUrlSubmit} disabled={!url.trim()}>
+            <Button
+              type="button"
+              onClick={handleUrlSubmit}
+              disabled={!url.trim()}
+            >
               Insert Image
             </Button>
           </div>

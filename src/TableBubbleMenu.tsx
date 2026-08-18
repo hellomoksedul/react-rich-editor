@@ -53,7 +53,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg"
     >
       <div className="flex items-center gap-0.5 border-r border-border pr-1">
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -63,7 +63,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         >
           <ArrowLeftToLine className="h-4 w-4" />
         </Button>
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -73,7 +73,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         >
           <ArrowRightToLine className="h-4 w-4" />
         </Button>
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -86,7 +86,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       </div>
 
       <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -96,7 +96,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         >
           <ArrowUpToLine className="h-4 w-4" />
         </Button>
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -106,7 +106,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         >
           <ArrowDownToLine className="h-4 w-4" />
         </Button>
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -121,7 +121,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
         <Popover>
           <PopoverTrigger asChild>
-            <Button
+            <Button onMouseDown={(e) => e.preventDefault()} 
               type="button"
               variant="ghost"
               size="sm"
@@ -134,7 +134,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
           <PopoverContent className="w-40 p-2" align="center">
             <div className="grid grid-cols-4 gap-1">
               {CELL_COLORS.map((color) => (
-                <button
+                <button onMouseDown={(e) => e.preventDefault()} 
                   type="button"
                   key={color.name}
                   onClick={() => setCellBackground(color.value)}
@@ -153,7 +153,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
           </PopoverContent>
         </Popover>
 
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -172,7 +172,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       </div>
 
       <div className="flex items-center gap-0.5 pl-1">
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"
@@ -182,7 +182,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         >
           <span className="text-xs font-bold px-1">M</span>
         </Button>
-        <Button
+        <Button onMouseDown={(e) => e.preventDefault()} 
           type="button"
           variant="ghost"
           size="sm"

@@ -179,7 +179,7 @@ const SlashCommandList = forwardRef<SlashCommandListRef, SlashCommandListProps>(
   }
 
   return (
-    <div className="w-64 max-h-80 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+    <div className="w-64 max-h-80 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md hellokit-scrollbar">
       {items.map((item, index) => (
         <button
           type="button"

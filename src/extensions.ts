@@ -5,25 +5,46 @@ import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 import { Table } from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
+import {
+  getHierarchicalIndexes,
+  TableOfContents,
+  type TableOfContentDataItem,
+} from "@tiptap/extension-table-of-contents";
 import TableRow from "@tiptap/extension-table-row";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
+import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
 import Youtube from "@tiptap/extension-youtube";
 import StarterKit from "@tiptap/starter-kit";
 
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { FontSize } from "./FontSizeExtension";
+import { FontWeight } from "./FontWeightExtension";
 import { ResizableImage } from "./ResizableImage";
 import { ResizableYoutube } from "./ResizableYoutube";
 import { SlashCommand, type SlashCommandOptions } from "./SlashCommand";
 
-export type GetEditorExtensionsOptions = SlashCommandOptions;
+/** One entry in the table of contents, as reported by the TableOfContents
+ * extension's onUpdate callback. Re-exported so consumers (e.g. Toolbar)
+ * don't need to depend on @tiptap/extension-table-of-contents directly. */
+export type TocItem = TableOfContentDataItem;
+
+export type GetEditorExtensionsOptions = SlashCommandOptions & {
+  /**
+   * Fires whenever the document's heading structure changes, with the
+   * current flat list of headings (id, level, textContent, pos, ...). Used
+   * to power a "Table of Contents" navigation UI. Omit if you don't need one.
+   */
+  onTocUpdate?: (items: TocItem[]) => void;
+};
 
 export const getEditorExtensions = (
   placeholder = "Start writing...",
@@ -47,6 +68,9 @@ export const getEditorExtensions = (
     },
   }),
   Underline,
+  Subscript,
+  Superscript,
+  Typography,
   TextAlign.configure({
     types: ["heading", "paragraph"],
     alignments: ["left", "center", "right", "justify"],
@@ -94,7 +118,7 @@ export const getEditorExtensions = (
           default: "center",
         },
         fullWidth: {
-          default: true,
+          default: false,
         },
         display: {
           default: "block",
@@ -105,7 +129,7 @@ export const getEditorExtensions = (
       return ReactNodeViewRenderer(ResizableImage);
     },
   }).configure({
-    inline: true,
+    inline: false,
     allowBase64: true,
   }),
   Link.extend({
@@ -137,11 +161,16 @@ export const getEditorExtensions = (
   }),
   TextStyle,
   FontSize,
+  FontWeight,
   Color,
   Highlight.configure({
     multicolor: true,
   }),
   CharacterCount,
+  TableOfContents.configure({
+    getIndex: getHierarchicalIndexes,
+    onUpdate: (items) => options.onTocUpdate?.(items),
+  }),
   Youtube.extend({
     addAttributes() {
       return {

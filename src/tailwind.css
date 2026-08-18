@@ -28,6 +28,27 @@
   margin-top: 1rem;
   margin-bottom: 0.75rem;
 }
+.ProseMirror h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
 .ProseMirror p {
   margin-bottom: 1rem;
   line-height: 1.75rem;

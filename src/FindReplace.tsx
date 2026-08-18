@@ -144,7 +144,7 @@ export function FindReplace({
                 autoFocus
               />
               <div className="flex gap-1">
-                <Button
+                <Button onMouseDown={(e) => e.preventDefault()} 
                   variant="outline"
                   size="sm"
                   onClick={findPrevious}
@@ -154,7 +154,7 @@ export function FindReplace({
                 >
                   <ArrowUp className="h-4 w-4" />
                 </Button>
-                <Button
+                <Button onMouseDown={(e) => e.preventDefault()} 
                   variant="outline"
                   size="sm"
                   onClick={findNext}
@@ -181,7 +181,7 @@ export function FindReplace({
 
           {/* Options */}
           <div className="flex items-center gap-2">
-            <input
+            <input onMouseDown={(e) => e.preventDefault()} 
               type="checkbox"
               id={caseSensitiveId}
               checked={caseSensitive}
@@ -198,14 +198,14 @@ export function FindReplace({
 
           {/* Actions */}
           <div className="flex gap-2 justify-end pt-2 border-t border-border">
-            <Button
+            <Button onMouseDown={(e) => e.preventDefault()} 
               variant="outline"
               onClick={replaceOne}
               disabled={totalMatches === 0}
             >
               Replace
             </Button>
-            <Button
+            <Button onMouseDown={(e) => e.preventDefault()} 
               variant="default"
               onClick={replaceAll}
               disabled={totalMatches === 0}

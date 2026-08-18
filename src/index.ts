@@ -4,8 +4,9 @@ export type { RichTextEditorProps } from "./RichTextEditor";
 
 export { Toolbar } from "./Toolbar";
 export { getEditorExtensions } from "./extensions";
-export type { GetEditorExtensionsOptions } from "./extensions";
+export type { GetEditorExtensionsOptions, TocItem } from "./extensions";
 export { FontSize } from "./FontSizeExtension";
+export { FontWeight } from "./FontWeightExtension";
 export { SlashCommand } from "./SlashCommand";
 export type { SlashCommandItem, SlashCommandOptions } from "./SlashCommand";
 export { htmlToMarkdown, markdownToHtml } from "./markdown-utils";

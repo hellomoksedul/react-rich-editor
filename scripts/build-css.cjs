@@ -26,6 +26,8 @@ async function build() {
         Rule(rule) {
           // Skip if inside @layer properties or @property
           if (rule.parent && rule.parent.name === 'property') return;
+          // Skip if inside @keyframes
+          if (rule.parent && rule.parent.type === 'atrule' && rule.parent.name === 'keyframes') return;
           // Skip variables or root
           if (rule.selector.includes(':root') || rule.selector.includes(':host')) return;
           if (rule.selector.includes('.hellokit-editor-scope')) return;
@@ -40,7 +42,7 @@ async function build() {
             if (cleanSelector.startsWith('.dark ') || cleanSelector.includes('.dark ')) {
               return cleanSelector.replace('.dark ', '.dark .hellokit-editor-scope ');
             }
-            if (cleanSelector === '.dark') return cleanSelector;
+            if (cleanSelector === '.dark' || cleanSelector === ':where(.dark)') return cleanSelector;
 
             return `.hellokit-editor-scope ${cleanSelector}`;
           });
@@ -59,7 +61,23 @@ async function build() {
 
     fs.writeFileSync(outputTsPath, tsContent);
     console.log('Successfully generated src/generated-styles.ts with dark mode & scope support');
-    
+
+    // Keep src/tailwind.css in sync too. It's imported directly by
+    // src/index.ts (used when a bundler resolves this package's
+    // "development" export condition, e.g. running the example app straight
+    // against source instead of dist/). It used to be a hand-maintained copy
+    // of editor-styles.css with no automated regeneration step at all, so it
+    // silently drifted out of sync whenever editor-styles.css changed.
+    // editor-styles.css is the actual source of truth, so just mirror it.
+    const editorStylesPath = path.join(__dirname, '../src/editor-styles.css');
+    const tailwindCssPath = path.join(__dirname, '../src/tailwind.css');
+    const editorStylesSource = fs.readFileSync(editorStylesPath, 'utf8');
+    const tailwindCssContent =
+      '/*! Auto-synced from src/editor-styles.css by scripts/build-css.js - DO NOT EDIT MANUALLY */\n' +
+      editorStylesSource;
+    fs.writeFileSync(tailwindCssPath, tailwindCssContent);
+    console.log('Synced src/tailwind.css from src/editor-styles.css');
+
   } catch (err) {
     console.error('Error generating styles:', err);
     process.exit(1);
