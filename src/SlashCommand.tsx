@@ -204,7 +204,7 @@ function getSlashCommandItems({
       icon: Columns,
       category: "blocks",
       command: ({ editor, range }) =>
-        editor.chain().focus().deleteRange(range).setColumns(2).run(),
+        editor.chain().focus().deleteRange(range).setLayout({ cols: 2 }).run(),
     },
     {
       title: "3 Columns",
@@ -212,7 +212,7 @@ function getSlashCommandItems({
       icon: Columns,
       category: "blocks",
       command: ({ editor, range }) =>
-        editor.chain().focus().deleteRange(range).setColumns(3).run(),
+        editor.chain().focus().deleteRange(range).setLayout({ cols: 3 }).run(),
     },
     {
       title: "FAQ",

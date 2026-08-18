@@ -1,8 +1,12 @@
 "use client";
 
 import { mergeAttributes, Node } from "@tiptap/core";
-import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
-import { Pencil } from "lucide-react";
+import {
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+  type NodeViewProps,
+} from "@tiptap/react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   Bar,
@@ -21,7 +25,13 @@ import {
 import { EditChartDialog } from "./EditChartDialog";
 import { cn } from "./lib/utils";
 
-export type ChartType = "bar" | "horizontalBar" | "groupedBar" | "line" | "pie" | "donut";
+export type ChartType =
+  | "bar"
+  | "horizontalBar"
+  | "groupedBar"
+  | "line"
+  | "pie"
+  | "donut";
 
 export interface ChartDataPoint {
   label: string;
@@ -37,7 +47,13 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     chartBlock: {
       /** Insert a new Chart block with sample data. */
-      setChartBlock: () => ReturnType;
+      setChartBlock: (
+        attrs?: Partial<{
+          chartType: ChartType;
+          title: string;
+          dataPoints: ChartDataPoint[];
+        }>,
+      ) => ReturnType;
     };
   }
 }
@@ -111,7 +127,10 @@ function ChartRenderer({
   const isHorizontal = chartType === "horizontalBar";
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={dataPoints} layout={isHorizontal ? "vertical" : "horizontal"}>
+      <BarChart
+        data={dataPoints}
+        layout={isHorizontal ? "vertical" : "horizontal"}
+      >
         {isHorizontal ? (
           <>
             <XAxis type="number" fontSize={12} />
@@ -134,7 +153,13 @@ function ChartRenderer({
   );
 }
 
-function ChartBlockView({ node, updateAttributes, selected, editor }: NodeViewProps) {
+function ChartBlockView({
+  node,
+  updateAttributes,
+  selected,
+  editor,
+  deleteNode,
+}: NodeViewProps) {
   const { chartType, title, dataPoints } = node.attrs as {
     chartType: ChartType;
     title: string;
@@ -147,26 +172,39 @@ function ChartBlockView({ node, updateAttributes, selected, editor }: NodeViewPr
       data-chart-block-wrapper=""
       className={cn(
         "group relative my-2 rounded-md border border-border p-3",
-        selected && "ring-2 ring-primary",
+        // Removed selected outline per user request
       )}
     >
       {title && (
-        <div className="mb-2 text-center text-sm font-medium text-foreground">{title}</div>
+        <div className="mb-2 text-center text-sm font-medium text-foreground">
+          {title}
+        </div>
       )}
       <div className="h-64 w-full">
         <ChartRenderer chartType={chartType} dataPoints={dataPoints} />
       </div>
 
       {editor.isEditable && (
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          contentEditable={false}
-          className="absolute top-2 right-2 flex items-center gap-1.5 rounded-md border border-border bg-background/90 px-2 py-1 text-xs font-medium shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          Edit Chart
-        </button>
+        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            contentEditable={false}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-background/90 px-2 py-1 text-xs font-medium shadow-sm hover:bg-accent"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Chart
+          </button>
+          <button
+            type="button"
+            onClick={deleteNode}
+            contentEditable={false}
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-background/90 text-muted-foreground shadow-sm hover:bg-accent hover:text-destructive"
+            title="Delete Chart"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
 
       <EditChartDialog
@@ -200,8 +238,11 @@ export const ChartBlock = Node.create<ChartBlockOptions>({
     return {
       chartType: {
         default: "bar" as ChartType,
-        parseHTML: (element) => element.getAttribute("data-chart-type") || "bar",
-        renderHTML: (attributes) => ({ "data-chart-type": attributes.chartType }),
+        parseHTML: (element) =>
+          element.getAttribute("data-chart-type") || "bar",
+        renderHTML: (attributes) => ({
+          "data-chart-type": attributes.chartType,
+        }),
       },
       title: {
         default: "",
@@ -232,7 +273,9 @@ export const ChartBlock = Node.create<ChartBlockOptions>({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, { "data-chart-block": "" }),
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+        "data-chart-block": "",
+      }),
     ];
   },
 
@@ -243,12 +286,16 @@ export const ChartBlock = Node.create<ChartBlockOptions>({
   addCommands() {
     return {
       setChartBlock:
-        () =>
+        (attrs = {}) =>
         ({ chain }) => {
           return chain()
             .insertContent({
               type: this.name,
-              attrs: { chartType: "bar", title: "Chart Title", dataPoints: DEFAULT_CHART_POINTS },
+              attrs: {
+                chartType: attrs.chartType ?? "bar",
+                title: attrs.title ?? "Chart Title",
+                dataPoints: attrs.dataPoints ?? DEFAULT_CHART_POINTS,
+              },
             })
             .run();
         },

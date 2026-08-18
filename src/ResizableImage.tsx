@@ -29,6 +29,7 @@ export function ResizableImage({
   updateAttributes,
   selected,
   deleteNode,
+  editor,
 }: NodeViewProps) {
   const altTextId = useId();
   const titleTextId = useId();
@@ -36,8 +37,9 @@ export function ResizableImage({
   const [title, setTitle] = useState(node.attrs.title || "");
   // Local align state for UI, though we generally rely on node.attrs
   const [align, setAlign] = useState(node.attrs.align || "center");
-  const [isFullWidth, setIsFullWidth] = useState(node.attrs.fullWidth === true); // Default false
-  const [displayMode, setDisplayMode] = useState(node.attrs.display || "block"); // block or inline
+  const [isFullWidth, setIsFullWidth] = useState(
+    node.attrs.fullWidth !== false,
+  ); // Default true
   const [isResizing, setIsResizing] = useState(false);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -52,7 +54,6 @@ export function ResizableImage({
     setTitle(node.attrs.title || "");
     setAlign(node.attrs.align || "center");
     setIsFullWidth(node.attrs.fullWidth !== false); // Default true
-    setDisplayMode(node.attrs.display || "block");
     const formatDim = (dim: string | number) => {
       if (typeof dim === "number") return `${dim}px`;
       if (
@@ -100,39 +101,12 @@ export function ResizableImage({
     deleteNode();
   };
 
-  const handleDisplayMode = (mode: "block" | "inline") => {
-    setDisplayMode(mode);
-    updateAttributes({ display: mode });
-    // Inline images can't be full width
-    if (mode === "inline") {
-      setIsFullWidth(false);
-      updateAttributes({ fullWidth: false, display: mode });
-    }
-  };
-
-  // Compute wrapper styles based on alignment
   const getWrapperStyle = () => {
     const baseStyle: React.CSSProperties = {
       position: "relative",
       lineHeight: 0,
       maxWidth: "100%",
     };
-
-    // Handle inline display
-    if (displayMode === "inline") {
-      baseStyle.display = "inline-block";
-      baseStyle.verticalAlign = "middle";
-      baseStyle.marginLeft = "0.25rem";
-      baseStyle.marginRight = "0.25rem";
-      const defaultWidth = 200; // Smaller for inline
-      const w =
-        node.attrs.width && node.attrs.width !== "auto"
-          ? `${node.attrs.width}px`
-          : `${defaultWidth}px`;
-      baseStyle.width = w;
-      baseStyle.height = "auto";
-      return baseStyle;
-    }
 
     // Handle full width
     if (isFullWidth) {
@@ -171,7 +145,8 @@ export function ResizableImage({
 
   const getOuterWrapperStyle = (): React.CSSProperties => {
     const style: React.CSSProperties = {
-      display: displayMode === "inline" ? "inline-block" : "block",
+      display: "inline-block",
+      verticalAlign: "middle",
       maxWidth: "100%",
       width: isFullWidth ? "100%" : "max-content",
       outline: "none",
@@ -180,13 +155,20 @@ export function ResizableImage({
 
     if (align === "left") {
       style.float = "left";
-      style.marginRight = "1rem";
+      style.marginRight = "1.5rem";
+      style.marginBottom = "1rem";
+      style.marginTop = "0.5rem";
     } else if (align === "right") {
       style.float = "right";
-      style.marginLeft = "1rem";
+      style.marginLeft = "1.5rem";
+      style.marginBottom = "1rem";
+      style.marginTop = "0.5rem";
     } else if (align === "center") {
+      style.display = "block";
       style.marginLeft = "auto";
       style.marginRight = "auto";
+      style.marginTop = "1.5rem";
+      style.marginBottom = "1.5rem";
     }
     return style;
   };
@@ -267,7 +249,7 @@ export function ResizableImage({
   return (
     <NodeViewWrapper
       className="resizable-image-wrapper-node-view clear-none"
-      as="div"
+      as="span"
       style={getOuterWrapperStyle()}
     >
       <div
@@ -294,7 +276,7 @@ export function ResizableImage({
         />
 
         {/* Selection Frame */}
-        {(selected || isResizing) && (
+        {editor.isEditable && (selected || isResizing) && (
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -305,7 +287,7 @@ export function ResizableImage({
         )}
 
         {/* Resize Handles */}
-        {(selected || isResizing) && !isCropperOpen && (
+        {editor.isEditable && (selected || isResizing) && !isCropperOpen && (
           <>
             {/* Left handle */}
             <div
@@ -383,7 +365,7 @@ export function ResizableImage({
         )}
 
         {/* Image Toolbar (Alignment + Alt) */}
-        {!isResizing && (
+        {editor.isEditable && !isResizing && (
           <div
             className={`absolute top-2 right-2 transition-opacity duration-200 z-30 ${
               isPopoverOpen
@@ -512,31 +494,6 @@ export function ResizableImage({
                         <TooltipContent>Crop Image</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </div>
-                  {/* Display Setting */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={
-                          displayMode === "inline" ? "default" : "secondary"
-                        }
-                        size="sm"
-                        className="flex-1 h-8 text-xs"
-                        onClick={() => handleDisplayMode("inline")}
-                      >
-                        Inline
-                      </Button>
-                      <Button
-                        variant={
-                          displayMode === "block" ? "default" : "secondary"
-                        }
-                        size="sm"
-                        className="flex-1 h-8 text-xs"
-                        onClick={() => handleDisplayMode("block")}
-                      >
-                        Block
-                      </Button>
-                    </div>
                   </div>
 
                   {/* Alt Text Input */}

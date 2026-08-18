@@ -4,15 +4,21 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import { useEffect, useRef, useState } from "react";
 import CodeEditor from "react-simple-code-editor";
-import { AiGenerator } from "./AiGenerator";
+import {
+  AskAiDialog,
+  DEFAULT_AI_PROVIDERS,
+  type AiCreditsInfo,
+  type AiProviderConfig,
+} from "./AskAiDialog";
 import { ButtonBlockMenu } from "./ButtonBlockMenu";
-import { ColumnsMenu } from "./ColumnsMenu";
 import { getEditorExtensions, type TocItem } from "./extensions";
+import { LayoutMenu } from "./LayoutMenu";
 import { FileUploadDialog } from "./FileUploadDialog";
 import { FindReplace } from "./FindReplace";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
+import { PreviewDialog } from "./PreviewDialog";
 import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
@@ -27,11 +33,30 @@ export interface RichTextEditorProps {
   toolbarPosition?: "top" | "bottom";
   onImageUpload?: (file: File) => Promise<string>;
   onListMedia?: () => Promise<MediaItem[]>;
+  /** @deprecated Use `onAskAi` instead — kept working for existing
+   * integrations. Ignored if `onAskAi` is also provided. */
   onAiGenerate?: (prompt: string) => Promise<string>;
   /** Upload a picked/dropped file (any type) for the "Upload File" block.
    * Without it, files are embedded as base64 data URLs — fine for small
    * files, but a real backend is recommended for anything larger. */
   onFileUpload?: (file: File) => Promise<string>;
+  /** Providers listed in the "Ask AI" toolbar dialog's provider picker.
+   * Defaults to four common providers (OpenAI/Anthropic/xAI/Google) — pass
+   * your own list to match whichever providers your backend supports. */
+  aiProviders?: AiProviderConfig[];
+  /** Called when the user submits a prompt from the "Ask AI" dialog. Must
+   * resolve to raw HTML (h1, h2, p, ul, ol, strong, em, ...) suitable for
+   * insertion into the editor — call your own backend here, never an AI
+   * provider directly from the client with a real API key. The "Ask AI"
+   * toolbar button is always shown; without this prop the dialog still
+   * opens but shows a reminder to wire it up instead of failing silently. */
+  onAskAi?: (params: { prompt: string; provider: AiProviderConfig }) => Promise<string>;
+  /** Optional credits/usage summary shown in the "Ask AI" dialog. Omit to hide that panel. */
+  aiCredits?: AiCreditsInfo;
+  /** Called when "Top up" is clicked in the "Ask AI" credits panel. Omit to hide the link. */
+  onTopUpCredits?: () => void;
+  /** localStorage key used to remember recent "Ask AI" prompts on this device. */
+  aiRecentPromptsStorageKey?: string;
 }
 
 export function RichTextEditor({
@@ -45,15 +70,21 @@ export function RichTextEditor({
   onListMedia,
   onAiGenerate,
   onFileUpload,
+  aiProviders,
+  onAskAi,
+  aiCredits,
+  onTopUpCredits,
+  aiRecentPromptsStorageKey,
 }: RichTextEditorProps) {
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
   const [isSignatureOpen, setIsSignatureOpen] = useState(false);
   const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [isAskAiOpen, setIsAskAiOpen] = useState(false);
   const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
   const [isSourceMode, setIsSourceMode] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTextForSearch, setSelectedTextForSearch] = useState("");
   const [sourceCode, setSourceCode] = useState("");
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
@@ -228,6 +259,13 @@ export function RichTextEditor({
     setIsSignatureOpen(false);
   };
 
+  // `onAskAi` (multi-provider) supersedes the legacy single-callback
+  // `onAiGenerate` — if only the legacy prop is wired up, adapt it so the
+  // "Ask AI" dialog still works (ignoring whichever provider is picked,
+  // since there's only ever the one).
+  const effectiveAskAi =
+    onAskAi ?? (onAiGenerate ? ({ prompt }: { prompt: string; provider: AiProviderConfig }) => onAiGenerate(prompt) : undefined);
+
   const toggleSourceMode = (mode: boolean) => {
     if (mode) {
       // Switching TO Source Mode
@@ -269,14 +307,15 @@ export function RichTextEditor({
             setIsFindReplaceOpen={setIsFindReplaceOpen}
             isShortcutsOpen={isShortcutsOpen}
             setIsShortcutsOpen={setIsShortcutsOpen}
-            isAiGeneratorOpen={isAiGeneratorOpen}
-            setIsAiGeneratorOpen={setIsAiGeneratorOpen}
+            isAskAiOpen={isAskAiOpen}
+            setIsAskAiOpen={setIsAskAiOpen}
             isLinkPopoverOpen={isLinkPopoverOpen}
             setIsLinkPopoverOpen={setIsLinkPopoverOpen}
             isSourceMode={isSourceMode}
             setIsSourceMode={toggleSourceMode}
+            isPreviewOpen={isPreviewOpen}
+            setIsPreviewOpen={setIsPreviewOpen}
             isSimple={isSimple}
-            showAiGenerator={!!onAiGenerate}
             tocItems={tocItems}
             onTocNavigate={handleTocNavigate}
           />
@@ -309,7 +348,7 @@ export function RichTextEditor({
           <>
             <TableBubbleMenu editor={editor} />
             <ButtonBlockMenu editor={editor} />
-            <ColumnsMenu editor={editor} />
+            <LayoutMenu editor={editor} />
             <div className="relative w-full min-h-125 max-h-200 overflow-y-auto">
               <EditorContent editor={editor} />
             </div>
@@ -326,14 +365,15 @@ export function RichTextEditor({
             setIsFindReplaceOpen={setIsFindReplaceOpen}
             isShortcutsOpen={isShortcutsOpen}
             setIsShortcutsOpen={setIsShortcutsOpen}
-            isAiGeneratorOpen={isAiGeneratorOpen}
-            setIsAiGeneratorOpen={setIsAiGeneratorOpen}
+            isAskAiOpen={isAskAiOpen}
+            setIsAskAiOpen={setIsAskAiOpen}
             isLinkPopoverOpen={isLinkPopoverOpen}
             setIsLinkPopoverOpen={setIsLinkPopoverOpen}
             isSourceMode={isSourceMode}
             setIsSourceMode={toggleSourceMode}
+            isPreviewOpen={isPreviewOpen}
+            setIsPreviewOpen={setIsPreviewOpen}
             isSimple={isSimple}
-            showAiGenerator={!!onAiGenerate}
             tocItems={tocItems}
             onTocNavigate={handleTocNavigate}
           />
@@ -408,12 +448,24 @@ export function RichTextEditor({
         />
       )}
 
-      {!isSimple && onAiGenerate && (
-        <AiGenerator
+      {!isSimple && (
+        <AskAiDialog
           editor={editor}
-          isOpen={isAiGeneratorOpen}
-          onClose={() => setIsAiGeneratorOpen(false)}
-          onGenerate={onAiGenerate}
+          isOpen={isAskAiOpen}
+          onClose={() => setIsAskAiOpen(false)}
+          providers={aiProviders ?? DEFAULT_AI_PROVIDERS}
+          onAskAi={effectiveAskAi}
+          credits={aiCredits}
+          onTopUpCredits={onTopUpCredits}
+          recentPromptsStorageKey={aiRecentPromptsStorageKey}
+        />
+      )}
+
+      {isPreviewOpen && (
+        <PreviewDialog
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          html={editor.getHTML()}
         />
       )}
     </div>

@@ -3,7 +3,7 @@
 import SignaturePad from "signature_pad";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { EditorDialog } from "./ui/editor-dialog";
 
 export interface SignatureDialogProps {
   isOpen: boolean;
@@ -25,39 +25,36 @@ export function SignatureDialog({ isOpen, onClose, onSave }: SignatureDialogProp
 
     let pad: SignaturePad | null = null;
     let handleEndStroke: (() => void) | null = null;
-    let rafId = 0;
-    let attempts = 0;
 
-    // The dialog is still running its open animation (and, in some cases,
-    // hasn't been laid out at all yet) when this effect first fires, so
-    // canvas.offsetWidth/Height can briefly read 0. Sizing the canvas'
-    // backing store to 0x0 silently breaks SignaturePad — nothing ever
-    // gets drawn, even though the (CSS-sized) white box still shows up
-    // fine. Retry on the next frame until we get a real, laid-out size.
-    const setupPad = () => {
-      if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) {
-        if (attempts++ < 60) rafId = requestAnimationFrame(setupPad);
-        return;
-      }
+    const initPad = () => {
+      if (!canvasRef.current) return;
+      const canvas = canvasRef.current;
+      
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (width === 0 || height === 0) return;
 
-      // Match the canvas's backing-store resolution to its displayed size
-      // so strokes aren't blurry/misaligned on high-DPI screens.
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      canvas.width = canvas.offsetWidth * ratio;
-      canvas.height = canvas.offsetHeight * ratio;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
       canvas.getContext("2d")?.scale(ratio, ratio);
 
-      pad = new SignaturePad(canvas, { backgroundColor: "rgb(255,255,255)" });
-      handleEndStroke = () => setIsEmpty(pad!.isEmpty());
-      pad.addEventListener("endStroke", handleEndStroke);
-      padRef.current = pad;
-      setIsEmpty(true);
+      if (pad) {
+        pad.clear();
+      } else {
+        pad = new SignaturePad(canvas, { backgroundColor: "rgb(255,255,255)" });
+        handleEndStroke = () => setIsEmpty(pad!.isEmpty());
+        pad.addEventListener("endStroke", handleEndStroke);
+        padRef.current = pad;
+        setIsEmpty(true);
+      }
     };
 
-    rafId = requestAnimationFrame(setupPad);
+    // Wait for Radix dialog animation (usually 150ms) to finish
+    const timer = setTimeout(initPad, 200);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      clearTimeout(timer);
       if (pad) {
         if (handleEndStroke) pad.removeEventListener("endStroke", handleEndStroke);
         pad.off();
@@ -77,14 +74,12 @@ export function SignatureDialog({ isOpen, onClose, onSave }: SignatureDialogProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-130">
-        <DialogHeader>
-          <DialogTitle>Signature</DialogTitle>
-        </DialogHeader>
-
+    <EditorDialog open={isOpen} onOpenChange={(open) => !open && onClose()} title="Signature">
         <canvas
           ref={canvasRef}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
           className="h-40 w-full touch-none rounded-md border-2 border-dashed border-muted-foreground/25 bg-white"
         />
 
@@ -96,7 +91,6 @@ export function SignatureDialog({ isOpen, onClose, onSave }: SignatureDialogProp
             Insert Signature
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </EditorDialog>
   );
 }

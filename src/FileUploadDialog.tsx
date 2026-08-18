@@ -4,7 +4,7 @@ import { Loader2, Paperclip } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { resolveFileUpload } from "./lib/file-upload";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { EditorDialog } from "./ui/editor-dialog";
 
 export interface FileUploadDialogProps {
   isOpen: boolean;
@@ -39,12 +39,7 @@ export function FileUploadDialog({ isOpen, onClose, onSelect, onFileUpload }: Fi
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-130">
-        <DialogHeader>
-          <DialogTitle>Upload File</DialogTitle>
-        </DialogHeader>
-
+    <EditorDialog open={isOpen} onOpenChange={(open) => !open && handleClose()} title="Upload File">
         <div
           className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 px-4 py-16 min-h-60 text-center transition-colors hover:border-muted-foreground/40"
           onDragOver={(e) => e.preventDefault()}
@@ -84,7 +79,6 @@ export function FileUploadDialog({ isOpen, onClose, onSelect, onFileUpload }: Fi
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-      </DialogContent>
-    </Dialog>
+    </EditorDialog>
   );
 }

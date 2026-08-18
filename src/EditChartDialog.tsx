@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ChartDataPoint, ChartType } from "./ChartBlockExtension";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { EditorDialog } from "./ui/editor-dialog";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
@@ -64,12 +64,7 @@ export function EditChartDialog({
   const total = pointsDraft.reduce((sum, point) => sum + (Number(point.value) || 0), 0);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-130">
-        <DialogHeader>
-          <DialogTitle>Edit Chart</DialogTitle>
-        </DialogHeader>
-
+    <EditorDialog open={isOpen} onOpenChange={(open) => !open && onClose()} title="Edit Chart">
         <div className="flex gap-2">
           <div className="flex-1 space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Chart Type</label>
@@ -148,7 +143,6 @@ export function EditChartDialog({
         >
           Save Chart
         </Button>
-      </DialogContent>
-    </Dialog>
+    </EditorDialog>
   );
 }

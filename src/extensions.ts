@@ -28,7 +28,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ButtonBlock } from "./ButtonBlockExtension";
 import { ChartBlock } from "./ChartBlockExtension";
-import { Column, ColumnGroup } from "./ColumnsExtension";
+import { LayoutItem, LayoutGroup } from "./LayoutExtension";
 import { Equation } from "./EquationExtension";
 import { FileAttachment } from "./FileAttachmentExtension";
 import { FontSize } from "./FontSizeExtension";
@@ -123,10 +123,10 @@ export const getEditorExtensions = (
           default: "center",
         },
         fullWidth: {
-          default: false,
+          default: true,
         },
         display: {
-          default: "block",
+          default: "inline",
         },
       };
     },
@@ -134,7 +134,7 @@ export const getEditorExtensions = (
       return ReactNodeViewRenderer(ResizableImage);
     },
   }).configure({
-    inline: false,
+    inline: true,
     allowBase64: true,
   }),
   Link.extend({
@@ -200,8 +200,8 @@ export const getEditorExtensions = (
   }),
   ButtonBlock,
   ChartBlock,
-  ColumnGroup,
-  Column,
+  LayoutGroup,
+  LayoutItem,
   Equation,
   FileAttachment,
   SlashCommand.configure({

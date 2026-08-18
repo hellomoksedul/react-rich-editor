@@ -15,6 +15,7 @@ import {
   CodeXml,
   Columns,
   Eraser,
+  Eye,
   FileCode,
   HelpCircle,
   Highlighter,
@@ -51,6 +52,9 @@ import {
 import { useEffect, useState } from "react";
 import { FaYoutube } from "react-icons/fa";
 
+import { DEFAULT_CHART_POINTS } from "./ChartBlockExtension";
+import { EditChartDialog } from "./EditChartDialog";
+import { EquationEditDialog } from "./EquationEditDialog";
 import type { TocItem } from "./extensions";
 import { cn } from "./lib/utils";
 import { FAQ_PATTERN_CONTENT } from "./SlashCommand";
@@ -97,14 +101,15 @@ interface ToolbarProps {
   setIsFindReplaceOpen: (open: boolean) => void;
   isShortcutsOpen: boolean;
   setIsShortcutsOpen: (open: boolean) => void;
-  isAiGeneratorOpen: boolean;
-  setIsAiGeneratorOpen: (open: boolean) => void;
+  isAskAiOpen: boolean;
+  setIsAskAiOpen: (open: boolean) => void;
   isLinkPopoverOpen: boolean;
   setIsLinkPopoverOpen: (open: boolean) => void;
   isSourceMode: boolean;
   setIsSourceMode: (mode: boolean) => void;
+  isPreviewOpen: boolean;
+  setIsPreviewOpen: (open: boolean) => void;
   isSimple?: boolean;
-  showAiGenerator?: boolean;
   tocItems: TocItem[];
   onTocNavigate: (item: TocItem) => void;
 }
@@ -190,13 +195,15 @@ export function Toolbar({
   onSignature,
   setIsFindReplaceOpen,
   setIsShortcutsOpen,
-  setIsAiGeneratorOpen,
+  isAskAiOpen,
+  setIsAskAiOpen,
   isLinkPopoverOpen,
   setIsLinkPopoverOpen,
   isSourceMode,
   setIsSourceMode,
+  isPreviewOpen,
+  setIsPreviewOpen,
   isSimple = false,
-  showAiGenerator = false,
   tocItems,
   onTocNavigate,
 }: ToolbarProps) {
@@ -206,9 +213,11 @@ export function Toolbar({
   const [isTextColorOpen, setIsTextColorOpen] = useState(false);
   const [isHighlightOpen, setIsHighlightOpen] = useState(false);
 
-  // YouTube Popover State
   const [isYoutubeOpen, setIsYoutubeOpen] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState("");
+
+  const [isEquationDialogOpen, setIsEquationDialogOpen] = useState(false);
+  const [isChartDialogOpen, setIsChartDialogOpen] = useState(false);
 
   // Force re-render of the toolbar when the editor's state changes
   // We do this locally instead of in RichTextEditor to prevent infinite loops.
@@ -891,6 +900,22 @@ export function Toolbar({
               </PopoverContent>
             </Popover>
 
+            <ToolbarButton
+              onClick={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .insertTable({
+                    rows: 3,
+                    cols: 3,
+                    withHeaderRow: true,
+                  })
+                  .run()
+              }
+              title="Add Table"
+            >
+              <Table className="h-4 w-4" aria-label="Table" />
+            </ToolbarButton>
             <ToolbarButton onClick={() => onImageUpload?.()} title="Add Image">
               <Image className="h-4 w-4" aria-label="Image" />
             </ToolbarButton>
@@ -914,7 +939,7 @@ export function Toolbar({
                   Add YouTube Video
                 </TooltipContent>
               </Tooltip>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-106.5">
                 <DialogHeader>
                   <DialogTitle>Add YouTube Video</DialogTitle>
                 </DialogHeader>
@@ -992,7 +1017,7 @@ export function Toolbar({
                       <span>Code Block</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => editor.chain().focus().setEquation().run()}
+                      onClick={() => setIsEquationDialogOpen(true)}
                     >
                       <Sigma className="mr-2 h-4 w-4" />
                       <span>Equation</span>
@@ -1011,36 +1036,30 @@ export function Toolbar({
                   <DropdownMenuSubContent>
                     <DropdownMenuItem
                       onClick={() =>
-                        editor
-                          .chain()
-                          .focus()
-                          .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                          .run()
+                        editor.chain().focus().setButtonBlock().run()
                       }
-                    >
-                      <Table className="mr-2 h-4 w-4" />
-                      <span>Table</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => editor.chain().focus().setButtonBlock().run()}
                     >
                       <MousePointerClick className="mr-2 h-4 w-4" />
                       <span>Button</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => editor.chain().focus().setChartBlock().run()}
+                      onClick={() => setIsChartDialogOpen(true)}
                     >
                       <BarChart3 className="mr-2 h-4 w-4" />
                       <span>Chart</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => editor.chain().focus().setColumns(2).run()}
+                      onClick={() =>
+                        editor.chain().focus().setLayout({ cols: 2 }).run()
+                      }
                     >
                       <Columns className="mr-2 h-4 w-4" />
                       <span>2 Columns</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => editor.chain().focus().setColumns(3).run()}
+                      onClick={() =>
+                        editor.chain().focus().setLayout({ cols: 3 }).run()
+                      }
                     >
                       <Columns className="mr-2 h-4 w-4" />
                       <span>3 Columns</span>
@@ -1058,7 +1077,11 @@ export function Toolbar({
                   <DropdownMenuSubContent>
                     <DropdownMenuItem
                       onClick={() =>
-                        editor.chain().focus().insertContent(FAQ_PATTERN_CONTENT).run()
+                        editor
+                          .chain()
+                          .focus()
+                          .insertContent(FAQ_PATTERN_CONTENT)
+                          .run()
                       }
                     >
                       <HelpCircle className="mr-2 h-4 w-4" />
@@ -1172,6 +1195,13 @@ export function Toolbar({
             <div className="w-px h-6 bg-border mx-1" />
 
             <ToolbarButton
+              onClick={() => setIsPreviewOpen(true)}
+              title="Preview"
+            >
+              <Eye className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
               onClick={() => setIsSourceMode(!isSourceMode)}
               active={isSourceMode}
               title="Source Code"
@@ -1179,20 +1209,44 @@ export function Toolbar({
               <CodeXml className="h-4 w-4" />
             </ToolbarButton>
 
-            {showAiGenerator && (
-              <>
-                <div className="w-px h-6 bg-border mx-1" />
-                <ToolbarButton
-                  onClick={() => setIsAiGeneratorOpen(true)}
-                  title="AI Content Generator"
-                >
-                  <Sparkles className="h-4 w-4 text-indigo-500" />
-                </ToolbarButton>
-              </>
-            )}
+            <div className="w-px h-6 bg-border mx-1" />
+            <ToolbarButton
+              onClick={() => setIsAskAiOpen(!isAskAiOpen)}
+              active={isAskAiOpen}
+              title="Ask AI"
+            >
+              <Sparkles className="h-4 w-4" />
+            </ToolbarButton>
           </div>
         )}
       </div>
+
+      <EquationEditDialog
+        isOpen={isEquationDialogOpen}
+        latex=""
+        displayMode={true}
+        onClose={() => setIsEquationDialogOpen(false)}
+        onSave={(latex, displayMode) => {
+          setIsEquationDialogOpen(false);
+          setTimeout(() => {
+            editor.chain().focus().setEquation({ latex, displayMode }).run();
+          }, 10);
+        }}
+      />
+
+      <EditChartDialog
+        isOpen={isChartDialogOpen}
+        chartType="bar"
+        title="Chart Title"
+        dataPoints={DEFAULT_CHART_POINTS}
+        onClose={() => setIsChartDialogOpen(false)}
+        onSave={(attrs) => {
+          setIsChartDialogOpen(false);
+          setTimeout(() => {
+            editor.chain().focus().setChartBlock(attrs).run();
+          }, 10);
+        }}
+      />
     </TooltipProvider>
   );
 }

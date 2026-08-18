@@ -10,7 +10,7 @@ import { useRef, useState } from "react";
 import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
 import { cn } from "./lib/utils";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { EditorDialog } from "./ui/editor-dialog";
 import { Input } from "./ui/input";
 
 export interface ImageUploadDialogProps {
@@ -90,12 +90,7 @@ export function ImageUploadDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-130">
-        <DialogHeader>
-          <DialogTitle>Add Image</DialogTitle>
-        </DialogHeader>
-
+    <EditorDialog open={isOpen} onOpenChange={(open) => !open && handleClose()} title="Add Image">
         <div className="flex items-center gap-1 rounded-md bg-muted/50 p-1 text-sm">
           <button
             type="button"
@@ -249,7 +244,6 @@ export function ImageUploadDialog({
         )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-      </DialogContent>
-    </Dialog>
+    </EditorDialog>
   );
 }

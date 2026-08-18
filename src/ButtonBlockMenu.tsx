@@ -28,21 +28,29 @@ const RADIUS_OPTIONS: { value: "none" | "sm" | "full"; label: string }[] = [
   { value: "full", label: "Pill" },
 ];
 
-/** A tiny swatch that visually previews the corner radius it represents,
- * rather than a text label ("Square"/"Rounded"/"Pill") — mirrors the
- * icon-based radius picker in the reference design. */
 function RadiusIcon({ radius }: { radius: "none" | "sm" | "full" }) {
   return (
     <span
       className={cn(
         "block h-3.5 w-3.5 border-2 border-current",
-        radius === "full" ? "rounded-full" : radius === "sm" ? "rounded-[4px]" : "rounded-none",
+        radius === "full"
+          ? "rounded-full"
+          : radius === "sm"
+            ? "rounded-sm"
+            : "rounded-none",
       )}
     />
   );
 }
 
-const COLOR_SWATCHES = ["#2563eb", "#16a34a", "#dc2626", "#ea580c", "#7c3aed", "#0f172a"];
+const COLOR_SWATCHES = [
+  "#2563eb",
+  "#16a34a",
+  "#dc2626",
+  "#ea580c",
+  "#7c3aed",
+  "#0f172a",
+];
 
 /** Finds the buttonBlock node + its position containing the current selection,
  * regardless of whether the selection is a NodeSelection on the block itself
@@ -95,26 +103,16 @@ export function ButtonBlockMenu({ editor }: ButtonBlockMenuProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className={cn(
-            "h-7 px-2 text-xs",
-            editor.getAttributes("buttonBlock").variant !== "outline" && "bg-accent",
-          )}
-          onClick={() => update({ variant: "filled" })}
+          className="h-7 px-2 text-xs w-15" // Fixed width to prevent jumping
+          onClick={() => {
+            const current = editor.getAttributes("buttonBlock").variant;
+            update({ variant: current === "outline" ? "filled" : "outline" });
+          }}
+          title="Toggle Style"
         >
-          Filled
-        </Button>
-        <Button
-          onMouseDown={(e) => e.preventDefault()}
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "h-7 px-2 text-xs",
-            editor.getAttributes("buttonBlock").variant === "outline" && "bg-accent",
-          )}
-          onClick={() => update({ variant: "outline" })}
-        >
-          Outline
+          {editor.getAttributes("buttonBlock").variant === "outline"
+            ? "Outline"
+            : "Filled"}
         </Button>
       </div>
 
@@ -125,53 +123,47 @@ export function ButtonBlockMenu({ editor }: ButtonBlockMenuProps) {
           variant="ghost"
           size="sm"
           className="h-7 w-7 p-0"
-          onClick={() => update({ align: "left" })}
-          title="Align Left"
+          onClick={() => {
+            const current = editor.getAttributes("buttonBlock").align;
+            const next =
+              current === "left"
+                ? "center"
+                : current === "center"
+                  ? "right"
+                  : "left";
+            update({ align: next });
+          }}
+          title="Toggle Alignment"
         >
-          <AlignLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          onMouseDown={(e) => e.preventDefault()}
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={() => update({ align: "center" })}
-          title="Align Center"
-        >
-          <AlignCenter className="h-4 w-4" />
-        </Button>
-        <Button
-          onMouseDown={(e) => e.preventDefault()}
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={() => update({ align: "right" })}
-          title="Align Right"
-        >
-          <AlignRight className="h-4 w-4" />
+          {editor.getAttributes("buttonBlock").align === "center" ? (
+            <AlignCenter className="h-4 w-4" />
+          ) : editor.getAttributes("buttonBlock").align === "right" ? (
+            <AlignRight className="h-4 w-4" />
+          ) : (
+            <AlignLeft className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
       <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
-        {RADIUS_OPTIONS.map((option) => (
-          <Button
-            key={option.value}
-            onMouseDown={(e) => e.preventDefault()}
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-7 w-7 p-0",
-              editor.getAttributes("buttonBlock").radius === option.value && "bg-accent",
-            )}
-            onClick={() => update({ radius: option.value })}
-            title={option.label}
-          >
-            <RadiusIcon radius={option.value} />
-          </Button>
-        ))}
+        <Button
+          onMouseDown={(e) => e.preventDefault()}
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => {
+            const current = editor.getAttributes("buttonBlock").radius;
+            const next =
+              current === "none" ? "sm" : current === "sm" ? "full" : "none";
+            update({ radius: next });
+          }}
+          title="Toggle Corner Radius"
+        >
+          <RadiusIcon
+            radius={editor.getAttributes("buttonBlock").radius || "sm"}
+          />
+        </Button>
       </div>
 
       <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
@@ -207,7 +199,8 @@ export function ButtonBlockMenu({ editor }: ButtonBlockMenuProps) {
 
         <Popover
           onOpenChange={(open) => {
-            if (open) setHrefDraft(editor.getAttributes("buttonBlock").href || "");
+            if (open)
+              setHrefDraft(editor.getAttributes("buttonBlock").href || "");
           }}
         >
           <PopoverTrigger asChild>
@@ -229,7 +222,8 @@ export function ButtonBlockMenu({ editor }: ButtonBlockMenuProps) {
                 onChange={(e) => setHrefDraft(e.target.value)}
                 placeholder="https://example.com"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") update({ href: hrefDraft.trim() || "#" });
+                  if (e.key === "Enter")
+                    update({ href: hrefDraft.trim() || "#" });
                 }}
                 autoFocus
               />

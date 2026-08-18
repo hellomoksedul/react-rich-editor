@@ -11,6 +11,7 @@ export function ResizableYoutube({
   node,
   updateAttributes,
   selected,
+  editor,
 }: NodeViewProps) {
   const [align, setAlign] = useState(node.attrs.align || "left");
   const [isResizing, setIsResizing] = useState(false);
@@ -171,12 +172,12 @@ export function ResizableYoutube({
         </div>
 
         {/* Selection Frame */}
-        {(selected || isResizing) && (
+        {editor.isEditable && (selected || isResizing) && (
           <div className="absolute inset-0 border-[1.5px] border-primary pointer-events-none rounded-sm z-20" />
         )}
 
         {/* Resize Handles */}
-        {(selected || isResizing) && (
+        {editor.isEditable && (selected || isResizing) && (
           <>
             <div
               className={`absolute top-0 left-0 w-4 h-4 sm:w-3.5 sm:h-3.5 bg-background border-[1.5px] border-primary z-30 cursor-nw-resize rounded-full shadow-sm hover:scale-110 transition-transform touch-none`}
@@ -206,7 +207,7 @@ export function ResizableYoutube({
         )}
 
         {/* Settings Toolbar */}
-        {!isResizing && (
+        {editor.isEditable && !isResizing && (
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-40">
             <Popover>
               <PopoverTrigger asChild>

@@ -3,7 +3,7 @@
 import katex from "katex";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { EditorDialog } from "./ui/editor-dialog";
 import { Textarea } from "./ui/textarea";
 
 export interface EquationEditDialogProps {
@@ -70,12 +70,7 @@ export function EquationEditDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-130">
-        <DialogHeader>
-          <DialogTitle>Equation</DialogTitle>
-        </DialogHeader>
-
+    <EditorDialog open={isOpen} onOpenChange={(open) => !open && onClose()} title="Equation">
         <div className="flex flex-wrap gap-1 rounded-md bg-muted/50 p-2">
           {SYMBOLS.map((symbol) => (
             <button
@@ -121,7 +116,6 @@ export function EquationEditDialog({
         >
           Insert Equation
         </Button>
-      </DialogContent>
-    </Dialog>
+    </EditorDialog>
   );
 }
