@@ -9,14 +9,14 @@ export default function Home() {
     <h1>The Art of Modern Web Development</h1>
     <p>In the rapidly evolving landscape of frontend engineering, the intersection of <strong>beautiful design</strong> and <em>functional architecture</em> has never been more important. Today, we are pushing the boundaries of what is possible in the browser.</p>
     
-    <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1200" alt="Developer workspace" title="Modern Workspace" width="100%" />
-    
-    <h2>Building with Design Systems</h2>
-    <p>A robust design system is the backbone of any scalable application. By leveraging utility-first CSS frameworks and accessible primitive components, developers can construct complex user interfaces with unprecedented speed.</p>
-    
-    <blockquote>
-      <p>"Good design is actually a lot harder to notice than poor design, in part because good design fits our needs so well that the design is invisible."</p>
-    </blockquote>
+    <h2 id="f6fdb747-625a-41d6-b7df-938e25a36585" data-toc-id="f6fdb747-625a-41d6-b7df-938e25a36585">How to connect html server</h2><p>Use this code for your editor <code>&lt;Accordion defaultValue={["item-1"]}&gt;</code></p><pre><code class="language-typescript">&lt;Accordion defaultValue={["item-1"]}&gt;
+  &lt;AccordionItem value="item-1"&gt;
+    &lt;AccordionTrigger&gt;Is it accessible?&lt;/AccordionTrigger&gt;
+    &lt;AccordionContent&gt;
+      Yes. It adheres to the WAI-ARIA design pattern.
+    &lt;/AccordionContent&gt;
+  &lt;/AccordionItem&gt;
+&lt;/Accordion&gt;</code></pre><h2 id="052701c3-a320-471c-b010-943b0007771e" data-toc-id="052701c3-a320-471c-b010-943b0007771e">Here is my Cover Image</h2><p><img src="https://edge.moksedul.com/images/1787086446790-cover.webp" align="center" fullwidth="true" display="inline"></p>
     
     <h3>Key advantages of modern editor tools:</h3>
     <ul>
