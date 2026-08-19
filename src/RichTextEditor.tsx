@@ -208,7 +208,7 @@ export function RichTextEditor({
       onImageCommand: () => setIsImageManagerOpen(true),
       onFileCommand: () => setIsFileManagerOpen(true),
       onSignatureCommand: () => setIsSignatureOpen(true),
-      onTocUpdate: (items) => setTocItems(items),
+      onTocUpdate: (items) => setTimeout(() => setTocItems(items), 0),
       onGenerateImage: onGenerateImage,
       onImageUpload,
     }),
