@@ -1,8 +1,7 @@
-import Header from "../components/Header";
-import Hero from "../components/Hero";
-import Features from "../components/Features";
-import EditorPreview from "../components/EditorPreview";
-import Footer from "../components/Footer";
+import EditorPreview from "@/components/EditorPreview";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
 
 export default function Home() {
   return (
@@ -11,7 +10,6 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center">
         <Hero />
         <EditorPreview />
-        <Features />
       </main>
       <Footer />
     </div>

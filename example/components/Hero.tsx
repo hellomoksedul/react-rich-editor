@@ -48,23 +48,19 @@ export default function Hero() {
 
       <div className="flex gap-4 justify-center flex-wrap">
         <a
-          href="#demo"
-          className="px-6 py-3 bg-foreground text-background font-medium rounded-lg hover:opacity-90 transition shadow-lg shadow-foreground/20"
+          href="https://www.npmjs.com/package/@hellokit/react-rich-editor"
+          target="_blank"
+          className="px-6 py-2.5 bg-foreground text-background font-medium rounded-lg hover:opacity-90 transition shadow-lg shadow-foreground/20"
         >
           Get Started
         </a>
-        <a
-          href="#demo"
-          className="px-6 py-3 bg-background text-foreground border border-foreground/20 font-medium rounded-lg hover:bg-foreground/5 transition"
-        >
-          Live Demo
-        </a>
+
         <a
           href="https://github.com/hellomoksedul/react-rich-editor"
           target="_blank"
-          className="px-6 py-3 bg-background text-foreground border border-foreground/10 font-medium rounded-lg hover:bg-foreground/5 transition"
+          className="px-6 py-2.5 bg-background text-foreground border border-foreground/10 font-medium rounded-lg hover:bg-foreground/5 transition"
         >
-          GitHub
+          Source Code
         </a>
       </div>
     </section>
