@@ -1,3 +1,4 @@
+import "./editor-styles.css";
 import "./tailwind.css";
 export { RichTextEditor } from "./RichTextEditor";
 export type { RichTextEditorProps } from "./RichTextEditor";
@@ -45,3 +46,4 @@ export type { ChartDataPoint, ChartType } from "./ChartBlockExtension";
 export { EditChartDialog } from "./EditChartDialog";
 export { LayoutItem, LayoutGroup } from "./LayoutExtension";
 export { LayoutMenu } from "./LayoutMenu";
+

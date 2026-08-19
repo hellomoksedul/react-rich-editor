@@ -3,6 +3,7 @@
 import React from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { getEditorExtensions } from "./extensions";
+import { StyleInjector } from "./StyleInjector";
 
 export interface RichTextViewerProps {
   content: string;
@@ -20,8 +21,11 @@ export function RichTextViewer({ content, className = "" }: RichTextViewerProps)
   if (!editor) return null;
 
   return (
-    <div className={className}>
-      <EditorContent editor={editor} />
-    </div>
+    <>
+      <StyleInjector />
+      <div className={className}>
+        <EditorContent editor={editor} />
+      </div>
+    </>
   );
 }

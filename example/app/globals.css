@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "@hellokit/react-rich-editor/src/editor-styles.css";
-@source "@hellokit/react-rich-editor";
 
 :root {
   --background: #ffffff;
