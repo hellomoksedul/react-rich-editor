@@ -107,7 +107,7 @@ export function InlineBubbleMenu({
           !isButton
         );
       }}
-      className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg"
+      className="hellokit-editor-scope flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1 shadow-lg"
     >
       <div className="flex items-center gap-0.5 border-r border-border pr-1">
         <Button

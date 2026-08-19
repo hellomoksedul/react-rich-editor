@@ -40,11 +40,11 @@ async function build() {
             // If the selector contains .dark, the .dark class must be outside the scope
             // For example: .dark .bg-white -> .dark .hellokit-editor-scope .bg-white
             if (cleanSelector.startsWith('.dark ') || cleanSelector.includes('.dark ')) {
-              return cleanSelector.replace('.dark ', '.dark .hellokit-editor-scope ');
+              return cleanSelector.replace('.dark ', '.dark .hellokit-editor-scope ') + ", " + cleanSelector.replace('.dark ', '.dark.hellokit-editor-scope');
             }
             if (cleanSelector === '.dark' || cleanSelector === ':where(.dark)') return cleanSelector;
 
-            return `.hellokit-editor-scope ${cleanSelector}`;
+            return `.hellokit-editor-scope ${cleanSelector}, .hellokit-editor-scope${cleanSelector}`;
           });
         }
       };
@@ -88,3 +88,4 @@ build().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+

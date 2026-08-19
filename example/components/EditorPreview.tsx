@@ -9,12 +9,13 @@ export default function EditorPreview() {
   const [content, setContent] = useState(DEFAULT_CONTENT);
 
   return (
-    <section id="demo" className="py-16 px-6 max-w-6xl mx-auto w-full">
-      <div className="bg-background rounded-xl border border-foreground/10 shadow-2xl overflow-hidden min-h-[700px]">
+    <section id="demo" className="px-6 max-w-6xl mx-auto w-full">
+      <div className="bg-background rounded-xl border border-foreground/10 shadow-2xl overflow-hidden min-h-150 p-6">
         <RichTextEditor
           value={content}
           onChange={setContent}
           placeholder="Start writing your masterpiece..."
+          className="rounded-lg"
         />
       </div>
     </section>

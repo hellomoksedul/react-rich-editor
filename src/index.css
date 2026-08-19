@@ -3,7 +3,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./editor-styles.css";
-@source "./";
+@source "./**/*.tsx";
 
 :root, .light {
   --background: #ffffff;

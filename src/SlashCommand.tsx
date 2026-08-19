@@ -327,14 +327,14 @@ const SlashCommandList = forwardRef<SlashCommandListRef, SlashCommandListProps>(
 
   if (flatItems.length === 0) {
     return (
-      <div className="w-64 rounded-md border border-border bg-popover p-3 text-sm text-muted-foreground shadow-md">
+      <div className="w-64 rounded-md border border-border bg-popover p-3 text-sm text-muted-foreground shadow-md hellokit-editor-scope">
         No results
       </div>
     );
   }
 
   return (
-    <div className="w-64 max-h-80 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md hellokit-scrollbar">
+    <div className="w-64 max-h-80 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md hellokit-scrollbar hellokit-editor-scope">
       {groups.map((group) => (
         <div key={group.category}>
           <div className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70 first:pt-1">

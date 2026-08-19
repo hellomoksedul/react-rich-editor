@@ -146,8 +146,7 @@ export function FindReplace({
               <div className="flex gap-1">
                 <Button onMouseDown={(e) => e.preventDefault()} 
                   variant="outline"
-                  size="sm"
-                  onClick={findPrevious}
+                  size="icon" onClick={findPrevious}
                   disabled={currentMatch <= 1 || totalMatches === 0}
                   title="Previous (Shift+Enter)"
                   className="h-9 w-9 p-0 focus-visible:z-10"
@@ -156,8 +155,7 @@ export function FindReplace({
                 </Button>
                 <Button onMouseDown={(e) => e.preventDefault()} 
                   variant="outline"
-                  size="sm"
-                  onClick={findNext}
+                  size="icon" onClick={findNext}
                   disabled={currentMatch >= totalMatches || totalMatches === 0}
                   title="Next (Enter)"
                   className="h-9 w-9 p-0 focus-visible:z-10"
@@ -218,3 +216,4 @@ export function FindReplace({
     </Dialog>
   );
 }
+
