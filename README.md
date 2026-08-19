@@ -307,9 +307,74 @@ import type {
 
 `getEditorExtensions(placeholder, options)` also accepts an `onTocUpdate?: (items: TocItem[]) => void` option if you're building a custom editor/toolbar and want to power your own Table of Contents UI — this is exactly how the built-in Toolbar's table-of-contents popover is implemented. `options.onFileCommand?: () => void` and `options.onSignatureCommand?: () => void` work the same way for a custom Upload File / Signature UI.
 
-## Next.js
+## Next.js (App Router) & Tailwind v4 Integration Guide
 
-All components are marked `"use client"`. Import and render `RichTextEditor` from a Client Component.
+If you are using this package inside a modern Next.js 15 app with Turbopack and Tailwind CSS v4, you must follow these specific steps to ensure styles don't conflict and advanced React blocks (Charts, Layouts) render correctly on the frontend.
+
+### 1. Next.js Config
+Add the package to `transpilePackages` in your `next.config.ts` so Turbopack compiles the TypeScript source correctly:
+```ts
+const nextConfig = {
+  transpilePackages: ["@hellokit/react-rich-editor"],
+};
+```
+
+### 2. Tailwind CSS v4 Setup
+To style the editor perfectly without letting the package's base variables leak into your project, **do not** import the root `index.css`. Instead, import only the scoped `editor-styles.css` and tell Tailwind to scan the package for utility classes.
+
+Update your `app/globals.css`:
+```css
+@import "tailwindcss";
+@import "@hellokit/react-rich-editor/src/editor-styles.css"; /* Scoped ProseMirror rules */
+@source "@hellokit/react-rich-editor"; /* Compile tailwind classes used inside the package */
+```
+
+### 3. Rendering Content on the Frontend (The Most Important Step)
+Tiptap's standard `dangerouslySetInnerHTML` will **fail** to render interactive blocks like Recharts (Charts) and Grid Layouts, because those are React components that disappear when converted to a raw HTML string.
+
+You **must** use the `<RichTextViewer>` component to render the saved content on the frontend.
+
+**Step A:** Create a dynamic wrapper in your project (e.g. `components/common/RichTextRenderer.tsx`):
+```tsx
+"use client";
+import dynamic from "next/dynamic";
+import { sanitizeRichText } from "@/lib/sanitize-html";
+
+// ssr: false is required because Tiptap uses the window object
+const RichTextViewer = dynamic(
+  () => import("@hellokit/react-rich-editor").then((mod) => mod.RichTextViewer),
+  { ssr: false, loading: () => <div>Loading...</div> }
+);
+
+export default function RichTextRenderer({ content, className }: { content: string, className?: string }) {
+  // Always sanitize HTML before rendering
+  const clean = sanitizeRichText(content || "");
+  return <RichTextViewer content={clean} className={className} />;
+}
+```
+
+**Step B:** If you use a sanitizer (like `sanitize-html`), ensure it allows `class`, `style`, and `data-*` attributes, otherwise Tiptap's layout structures will be stripped out:
+```ts
+allowedAttributes: {
+  "*": ["class", "style", "data-*"],
+}
+```
+
+**Step C:** Replace raw HTML injection in your frontend pages:
+```tsx
+// ❌ DO NOT DO THIS:
+<div dangerouslySetInnerHTML={{ __html: blog.content }} />
+
+// ✅ DO THIS INSTEAD:
+<RichTextRenderer 
+  content={blog.content} 
+  className="ProseMirror prose prose-zinc max-w-none" 
+/>
+```
+
+### 4. Image Generation (CORS Proxy)
+If you are passing an `onGenerateImage` handler to `<RichTextEditor>` that uses an external AI service (like Pollinations), do not fetch it directly from the client browser. Browsers will block the request (CORS) or return a corrupted error blob. 
+Always route the image generation through a Next.js API route (`/api/generate-image/route.ts`) to download the image securely on the server and pass the ArrayBuffer back to the client.
 
 ## License
 

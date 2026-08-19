@@ -1,6 +1,6 @@
 {
   "name": "@hellokit/react-rich-editor",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A full-featured Tiptap-based rich text editor for React — toolbar, resizable images, YouTube embeds, tables, find & replace, source mode, font size, highlight, and more.",
   "keywords": [
     "react",
@@ -22,18 +22,19 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./index.css": {
-      "development": "./src/index.css",
       "default": "./dist/index.css"
-    }
+    },
+    "./src/editor-styles.css": "./src/editor-styles.css",
+    "./editor-styles.css": "./src/editor-styles.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "sideEffects": [
     "**/*.css"

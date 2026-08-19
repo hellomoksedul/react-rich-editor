@@ -9,20 +9,23 @@ import {
   DEFAULT_AI_PROVIDERS,
   type AiCreditsInfo,
   type AiProviderConfig,
+  type AskAiHandler,
 } from "./AskAiDialog";
 import { ButtonBlockMenu } from "./ButtonBlockMenu";
 import { getEditorExtensions, type TocItem } from "./extensions";
-import { LayoutMenu } from "./LayoutMenu";
 import { FileUploadDialog } from "./FileUploadDialog";
 import { FindReplace } from "./FindReplace";
 import { ImageUploadDialog } from "./ImageUploadDialog";
+import { InlineBubbleMenu } from "./InlineBubbleMenu";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
-import { type MediaItem, resolveImageUpload } from "./lib/image-upload";
+import { LayoutMenu } from "./LayoutMenu";
+import { resolveImageUpload, type MediaItem } from "./lib/image-upload";
 import { PreviewDialog } from "./PreviewDialog";
 import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
-import { InlineBubbleMenu } from "./InlineBubbleMenu";
+import { GenerateImageDialog } from "./GenerateImageDialog";
+import { TranslateDialog } from "./TranslateDialog";
 import { Toolbar } from "./Toolbar";
 
 export interface RichTextEditorProps {
@@ -45,19 +48,13 @@ export interface RichTextEditorProps {
    * Defaults to four common providers (OpenAI/Anthropic/xAI/Google) — pass
    * your own list to match whichever providers your backend supports. */
   aiProviders?: AiProviderConfig[];
-  /** Called when the user submits a prompt from the "Ask AI" dialog. Must
-   * resolve to raw HTML (h1, h2, p, ul, ol, strong, em, ...) suitable for
-   * insertion into the editor — call your own backend here, never an AI
-   * provider directly from the client with a real API key. The "Ask AI"
-   * toolbar button is always shown; without this prop the dialog still
-   * opens but shows a reminder to wire it up instead of failing silently. */
-  onAskAi?: (params: { prompt: string; provider: AiProviderConfig }) => Promise<string>;
+  /** Async callback that should route the prompt to an AI backend and return the generated HTML. */
+  onAskAi?: AskAiHandler;
   /** Optional credits/usage summary shown in the "Ask AI" dialog. Omit to hide that panel. */
   aiCredits?: AiCreditsInfo;
-  /** Called when "Top up" is clicked in the "Ask AI" credits panel. Omit to hide the link. */
   onTopUpCredits?: () => void;
-  /** localStorage key used to remember recent "Ask AI" prompts on this device. */
   aiRecentPromptsStorageKey?: string;
+  onGenerateImage?: (prompt: string, options?: { aspectRatio?: string }) => Promise<string>;
 }
 
 export function RichTextEditor({
@@ -76,6 +73,7 @@ export function RichTextEditor({
   aiCredits,
   onTopUpCredits,
   aiRecentPromptsStorageKey,
+  onGenerateImage,
 }: RichTextEditorProps) {
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
@@ -86,9 +84,95 @@ export function RichTextEditor({
   const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
   const [isSourceMode, setIsSourceMode] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isGenerateImageOpen, setIsGenerateImageOpen] = useState(false);
+  const [isTranslateOpen, setIsTranslateOpen] = useState(false);
   const [selectedTextForSearch, setSelectedTextForSearch] = useState("");
   const [sourceCode, setSourceCode] = useState("");
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
+
+  const handleInlineAiAction = async (action: string) => {
+    if (action === "generate_image") {
+      setIsGenerateImageOpen(true);
+      return;
+    }
+    if (action === "translate") {
+      setIsTranslateOpen(true);
+      return;
+    }
+
+    if (!editor) return;
+
+    const { from, to, empty } = editor.state.selection;
+    if (empty) {
+      alert("Please select some text first to use inline AI tools.");
+      return;
+    }
+    const selectedText = editor.state.doc.textBetween(from, to, " ");
+
+    if (!effectiveAskAi) {
+      alert("Please configure the onAskAi prop to use inline AI tools.");
+      return;
+    }
+
+    const { DOMSerializer } = await import("@tiptap/pm/model");
+    const slice = editor.state.selection.content();
+    const serializer = DOMSerializer.fromSchema(editor.schema);
+    const frag = serializer.serializeFragment(slice.content);
+    const tmp = document.createElement("div");
+    tmp.appendChild(frag);
+    const selectedHtml = tmp.innerHTML;
+
+    const actionPrompts: Record<string, string> = {
+      fix_grammar: "Fix the grammar of the following text. IMPORTANT: Output ONLY the corrected text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly.",
+      simplify: "Simplify the following text. IMPORTANT: Output ONLY the simplified text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly.",
+      complete_sentence: "Complete the following sentence naturally. IMPORTANT: Output ONLY the completed text. Do NOT wrap the output in any HTML tags (like <p>).",
+      make_longer: "Expand on the following text and make it longer. IMPORTANT: Output ONLY the expanded text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly.",
+      make_shorter: "Summarize or make the following text shorter. IMPORTANT: Output ONLY the shorter text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly.",
+    };
+
+    const instruction = actionPrompts[action] || "Improve this text. Preserve existing HTML tags and do not wrap in <p> unless the input contains it:";
+    const prompt = `${instruction}\n\n${selectedHtml || selectedText}`;
+    
+    // Default to the first available provider
+    const provider = aiProviders?.[0] || DEFAULT_AI_PROVIDERS[0];
+
+    try {
+      const originalSelection = editor.state.selection;
+      let currentEnd = originalSelection.to;
+      let accumulatedHTML = "";
+      let hasStartedStreaming = false;
+      
+      // Apply the pulsing decoration to the selected text
+      editor.view.dispatch(editor.state.tr.setMeta("aiLoading", { isLoading: true, from: originalSelection.from, to: originalSelection.to }));
+
+      const resultHTML = await effectiveAskAi({ 
+        prompt, 
+        provider,
+        onStream: (chunk) => {
+          if (!hasStartedStreaming) {
+             editor.view.dispatch(editor.state.tr.setMeta("aiLoading", { isLoading: false, from: 0, to: 0 }));
+             hasStartedStreaming = true;
+          }
+          accumulatedHTML += chunk;
+          // Delete from start to currentEnd, and insert accumulated text
+          editor.chain().focus()
+            .setTextSelection({ from: originalSelection.from, to: currentEnd })
+            .insertContent(accumulatedHTML)
+            .run();
+            
+          // Update currentEnd to the new selection end (which is right after the inserted content)
+          currentEnd = editor.state.selection.to;
+        }
+      });
+      
+      // Final replacement just to be sure (if streaming wasn't used or to set final sanitized HTML)
+      editor.chain().focus().setTextSelection({ from: originalSelection.from, to: currentEnd }).insertContent(resultHTML).run();
+    } catch (error: any) {
+      alert(error?.message || "AI request failed.");
+    } finally {
+      editor.view.dispatch(editor.state.tr.setMeta("aiLoading", { isLoading: false, from: 0, to: 0 }));
+    }
+  };
 
   // Kept fresh via effect below so the drop/paste handlers below (captured
   // once by useEditor) always call the latest onImageUpload prop.
@@ -125,9 +209,11 @@ export function RichTextEditor({
       onFileCommand: () => setIsFileManagerOpen(true),
       onSignatureCommand: () => setIsSignatureOpen(true),
       onTocUpdate: (items) => setTocItems(items),
+      onGenerateImage: onGenerateImage,
+      onImageUpload,
     }),
     content: value,
-    immediatelyRender: false,
+    immediatelyRender: true,
     editorProps: {
       attributes: {
         class: `focus:outline-none ${isSimple ? "simple-mode" : ""}`,
@@ -154,8 +240,8 @@ export function RichTextEditor({
         // Unlike drop, a plain paste can't navigate the tab away, so a
         // non-image file here is left to ProseMirror's normal paste
         // handling (returning false) rather than pre-empted.
-        const files = Array.from(event.clipboardData?.files ?? []).filter(
-          (f) => f.type.startsWith("image/"),
+        const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
+          f.type.startsWith("image/"),
         );
         if (files.length === 0) return false;
         event.preventDefault();
@@ -166,7 +252,11 @@ export function RichTextEditor({
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       lastUpdatedValue.current = html;
-      onChange?.(html);
+      // Defer the external onChange call to prevent "Cannot update a component while rendering a different component"
+      // or "component hasn't mounted yet" errors in React 19 when Tiptap normalizes content on first render.
+      setTimeout(() => {
+        onChange?.(html);
+      }, 0);
     },
   });
 
@@ -205,7 +295,11 @@ export function RichTextEditor({
   // so they silently did nothing.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "f") {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        e.key.toLowerCase() === "f"
+      ) {
         e.preventDefault();
 
         // Get selected text if any
@@ -219,13 +313,21 @@ export function RichTextEditor({
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "k") {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        e.key.toLowerCase() === "k"
+      ) {
         e.preventDefault();
         setIsLinkPopoverOpen(true);
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "h") {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "h"
+      ) {
         e.preventDefault();
         editor?.chain().focus().setHorizontalRule().run();
       }
@@ -251,7 +353,11 @@ export function RichTextEditor({
     }
   };
 
-  const handleFileSelect = (attrs: { url: string; name: string; size: number }) => {
+  const handleFileSelect = (attrs: {
+    url: string;
+    name: string;
+    size: number;
+  }) => {
     editor?.chain().focus().setFileAttachment(attrs).run();
   };
 
@@ -265,7 +371,11 @@ export function RichTextEditor({
   // "Ask AI" dialog still works (ignoring whichever provider is picked,
   // since there's only ever the one).
   const effectiveAskAi =
-    onAskAi ?? (onAiGenerate ? ({ prompt }: { prompt: string; provider: AiProviderConfig }) => onAiGenerate(prompt) : undefined);
+    onAskAi ??
+    (onAiGenerate
+      ? ({ prompt }: { prompt: string; provider: AiProviderConfig }) =>
+          onAiGenerate(prompt)
+      : undefined);
 
   const toggleSourceMode = (mode: boolean) => {
     if (mode) {
@@ -293,9 +403,8 @@ export function RichTextEditor({
       <StyleInjector />
       <div
         className={
-          className
-            ? className
-            : "bg-background text-foreground border border-border rounded-md overflow-hidden"
+          className ||
+          "hellokit-editor-container relative flex flex-col w-full border border-input rounded-md overflow-hidden bg-background focus-within:outline-none"
         }
       >
         {toolbarPosition === "top" && (
@@ -319,6 +428,7 @@ export function RichTextEditor({
             isSimple={isSimple}
             tocItems={tocItems}
             onTocNavigate={handleTocNavigate}
+            onInlineAiAction={handleInlineAiAction}
           />
         )}
 
@@ -347,7 +457,7 @@ export function RichTextEditor({
           </div>
         ) : (
           <>
-            <InlineBubbleMenu editor={editor} />
+            <InlineBubbleMenu editor={editor} onInlineAiAction={handleInlineAiAction} />
             <TableBubbleMenu editor={editor} />
             <ButtonBlockMenu editor={editor} />
             <LayoutMenu editor={editor} />
@@ -378,6 +488,7 @@ export function RichTextEditor({
             isSimple={isSimple}
             tocItems={tocItems}
             onTocNavigate={handleTocNavigate}
+            onInlineAiAction={handleInlineAiAction}
           />
         )}
 
@@ -460,6 +571,30 @@ export function RichTextEditor({
           credits={aiCredits}
           onTopUpCredits={onTopUpCredits}
           recentPromptsStorageKey={aiRecentPromptsStorageKey}
+        />
+      )}
+
+      {!isSimple && (
+        <GenerateImageDialog
+          editor={editor}
+          isOpen={isGenerateImageOpen}
+          onClose={() => setIsGenerateImageOpen(false)}
+          onGenerate={onGenerateImage}
+          onImageUpload={onImageUpload}
+        />
+      )}
+
+      {!isSimple && (
+        <TranslateDialog
+          editor={editor}
+          isOpen={isTranslateOpen}
+          onClose={() => setIsTranslateOpen(false)}
+          onTranslate={async (language, selectedText, onStream) => {
+             const prompt = `Translate the following text to ${language}. IMPORTANT: Output ONLY the translated text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly:\n\n${selectedText}`;
+             const provider = aiProviders?.[0] || DEFAULT_AI_PROVIDERS[0];
+             if (!effectiveAskAi) throw new Error("onAskAi not configured");
+             return effectiveAskAi({ prompt, provider, onStream });
+          }}
         />
       )}
 

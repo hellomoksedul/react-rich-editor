@@ -1,7 +1,7 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
-import { Loader2, Mic, MicOff, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "./ui/button";
@@ -19,9 +19,9 @@ export interface AiProviderConfig {
   id: string;
   label: string;
   model: string;
-  /** A small color swatch shown next to the provider's name in the picker. */
   color: string;
 }
+
 
 export interface AiCreditsInfo {
   remaining: number;
@@ -32,6 +32,7 @@ export interface AiCreditsInfo {
 export interface AskAiParams {
   prompt: string;
   provider: AiProviderConfig;
+  onStream?: (chunk: string) => void;
 }
 
 /** Resolves to raw HTML (h1, h2, p, ul, ol, strong, em, ...) suitable for
@@ -41,15 +42,15 @@ export interface AskAiParams {
 export type AskAiHandler = (params: AskAiParams) => Promise<string>;
 
 export const DEFAULT_AI_PROVIDERS: AiProviderConfig[] = [
+  { id: "google", label: "Google Gemini", model: "gemini-1.5-pro", color: "#4285f4" },
+  { id: "google-flash", label: "Google Gemini Flash", model: "gemini-1.5-flash", color: "#8ab4f8" },
+  { id: "anthropic", label: "Anthropic Claude", model: "claude-3.5-sonnet", color: "#d97757" },
+  { id: "anthropic-opus", label: "Anthropic Claude Opus", model: "claude-3-opus", color: "#b95c40" },
   { id: "openai", label: "OpenAI ChatGPT", model: "gpt-4o", color: "#10a37f" },
-  {
-    id: "anthropic",
-    label: "Anthropic Claude",
-    model: "sonnet-3.5",
-    color: "#da7756",
-  },
-  { id: "xai", label: "xAI Grok", model: "grok-2", color: "#e5e7eb" },
-  { id: "google", label: "Google Gemini", model: "1.5-pro", color: "#4285f4" },
+  { id: "openai-mini", label: "OpenAI ChatGPT Mini", model: "gpt-4o-mini", color: "#1a7f64" },
+  { id: "deepseek", label: "DeepSeek", model: "deepseek-coder", color: "#4d6bfe" },
+  { id: "meta", label: "Meta Llama", model: "llama-3-70b", color: "#0668E1" },
+  { id: "xai", label: "xAI Grok", model: "grok-2", color: "#000000" },
 ];
 
 const RECENT_PROMPTS_LIMIT = 10;
@@ -121,9 +122,7 @@ export function AskAiDialog({
   const [generatedHtml, setGeneratedHtml] = useState("");
   const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
   const [showAllRecent, setShowAllRecent] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -131,20 +130,12 @@ export function AskAiDialog({
     if (!providerId && providers[0]) setProviderId(providers[0].id);
   }, [isOpen, recentPromptsStorageKey]);
 
-  useEffect(() => {
-    return () => {
-      recognitionRef.current?.stop?.();
-    };
-  }, []);
-
   const reset = () => {
     setPrompt("");
     setGeneratedHtml("");
     setError("");
     setIsLoading(false);
     setShowAllRecent(false);
-    recognitionRef.current?.stop?.();
-    setIsListening(false);
   };
 
   const handleClose = () => {
@@ -154,37 +145,6 @@ export function AskAiDialog({
 
   const selectedProvider =
     providers.find((p) => p.id === providerId) || providers[0];
-
-  const toggleMic = () => {
-    const SpeechRecognitionCtor =
-      typeof window !== "undefined"
-        ? (window as any).SpeechRecognition ||
-          (window as any).webkitSpeechRecognition
-        : undefined;
-    if (!SpeechRecognitionCtor) return;
-
-    if (isListening) {
-      recognitionRef.current?.stop?.();
-      setIsListening(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.continuous = false;
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results as any)
-        .map((result: any) => result[0]?.transcript || "")
-        .join(" ");
-      setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  };
 
   const handleAskAi = async () => {
     if (!prompt.trim() || !selectedProvider) return;
@@ -201,20 +161,32 @@ export function AskAiDialog({
     setGeneratedHtml("");
 
     try {
-      let content = await onAskAi({
+      let fullContent = "";
+      const content = await onAskAi({
         prompt: prompt.trim(),
         provider: selectedProvider,
+        onStream: (chunk) => {
+           fullContent += chunk;
+           // Clean up markdown code fences some models wrap HTML in.
+           const cleanHtml = fullContent
+             .replace(/^```html\s*/i, "")
+             .replace(/^```\s*/i, "")
+             .replace(/```$/i, "")
+             .replace(/[\r\n]+/g, "")
+             .trim();
+           setGeneratedHtml(cleanHtml);
+        }
       });
 
-      // Clean up markdown code fences some models wrap HTML in.
-      content = content
+      // Final cleanup using the resolved content from the promise
+      const cleanHtml = content
         .replace(/^```html\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/```$/i, "")
         .replace(/[\r\n]+/g, "")
         .trim();
 
-      setGeneratedHtml(content);
+      setGeneratedHtml(cleanHtml);
       setRecentPrompts(
         saveRecentPrompt(recentPromptsStorageKey, prompt.trim(), recentPrompts),
       );
@@ -241,12 +213,6 @@ export function AskAiDialog({
   const visibleRecent = showAllRecent
     ? recentPrompts
     : recentPrompts.slice(0, RECENT_PROMPTS_VISIBLE);
-  const speechSupported =
-    typeof window !== "undefined" &&
-    !!(
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition
-    );
 
   return (
     <EditorDialog
@@ -269,26 +235,7 @@ export function AskAiDialog({
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant={isListening ? "default" : "outline"}
-            size="icon"
-            onClick={toggleMic}
-            disabled={!speechSupported}
-            title={
-              speechSupported
-                ? "Voice input"
-                : "Voice input not supported in this browser"
-            }
-          >
-            {isListening ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </Button>
-
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Select value={providerId} onValueChange={setProviderId}>
               <SelectTrigger className="w-45 h-9">

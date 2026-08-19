@@ -10,6 +10,7 @@ import {
   Minimize,
   Settings2,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import React, { useEffect, useId, useRef, useState } from "react";
 import { ImageCropper } from "./ui/ImageCropper";
@@ -17,12 +18,16 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { EditorDialog } from "./ui/editor-dialog";
+import { Textarea } from "./ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { AIIcon } from "./AIIcon";
 
 export function ResizableImage({
   node,
@@ -30,6 +35,7 @@ export function ResizableImage({
   selected,
   deleteNode,
   editor,
+  extension,
 }: NodeViewProps) {
   const altTextId = useId();
   const titleTextId = useId();
@@ -43,6 +49,9 @@ export function ResizableImage({
   const [isResizing, setIsResizing] = useState(false);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+  const [regeneratePrompt, setRegeneratePrompt] = useState("");
+  const [aspectRatio, setAspectRatio] = useState("16:9");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -244,6 +253,79 @@ export function ResizableImage({
     document.addEventListener("mouseup", onEnd);
     document.addEventListener("touchmove", onMove, { passive: false });
     document.addEventListener("touchend", onEnd);
+  };
+
+  const handleRegenerateClick = () => {
+    const onGenerateImage = extension.options?.onGenerateImage;
+    if (!onGenerateImage) {
+      alert("Please wire up the onGenerateImage prop in <RichTextEditor> to enable image generation.");
+      return;
+    }
+    
+    setRegeneratePrompt(alt);
+    setIsPopoverOpen(false);
+    setIsRegenerateOpen(true);
+  };
+
+  const executeRegenerate = async () => {
+    if (!regeneratePrompt.trim()) return;
+
+    const onGenerateImage = extension.options?.onGenerateImage;
+    if (!onGenerateImage) return;
+
+    setIsRegenerateOpen(false);
+
+    // Save the original src in case we need to revert
+    const originalSrc = node.attrs.src;
+
+    // Swap to animated placeholder
+    const placeholderUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f4f4f5" />
+      <stop offset="50%" stop-color="#e4e4e7" />
+      <stop offset="100%" stop-color="#f4f4f5" />
+    </linearGradient>
+    <clipPath id="clip">
+      <rect width="100%" height="100%" />
+    </clipPath>
+  </defs>
+  <rect width="100%" height="100%" fill="#f4f4f5" />
+  <rect width="200%" height="100%" fill="url(#shimmer)" clip-path="url(#clip)">
+    <animate attributeName="x" from="-100%" to="100%" dur="1.5s" repeatCount="indefinite" />
+  </rect>
+  <text x="50%" y="50%" font-family="system-ui, sans-serif" font-size="16" font-weight="500" fill="#a1a1aa" text-anchor="middle" dominant-baseline="middle">✨ Regenerating image...</text>
+</svg>
+`)}`;
+
+    updateAttributes({ src: placeholderUrl, alt: regeneratePrompt });
+
+    try {
+      let newImageUrl = await onGenerateImage(regeneratePrompt, { aspectRatio });
+      
+      const onImageUpload = extension.options?.onImageUpload;
+      if (onImageUpload) {
+        try {
+          const response = await fetch(newImageUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch regenerated image: ${response.statusText}`);
+          }
+          const blob = await response.blob();
+          const file = new File([blob], `regenerated-image-${Date.now()}.jpg`, { type: "image/jpeg" });
+          newImageUrl = await onImageUpload(file);
+        } catch (uploadError) {
+          console.error("Failed to upload regenerated image:", uploadError);
+        }
+      }
+      
+      updateAttributes({ src: newImageUrl });
+      setAlt(regeneratePrompt);
+    } catch (e: any) {
+      alert(e?.message || "Failed to regenerate image.");
+      // Rollback to original image on failure
+      updateAttributes({ src: originalSrc, alt: alt });
+    }
   };
 
   return (
@@ -533,15 +615,28 @@ export function ResizableImage({
                   </div>
 
                   {/* Delete Button */}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="w-full"
-                    onClick={deleteNode}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Image
-                  </Button>
+                  <div className="flex gap-2">
+                    {extension.options?.onGenerateImage && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleRegenerateClick}
+                      >
+                        <AIIcon className="w-4 h-4 mr-2" />
+                        Regenerate
+                      </Button>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                      onClick={deleteNode}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -549,14 +644,82 @@ export function ResizableImage({
         )}
       </div>
 
+      {isRegenerateOpen && (
+        <EditorDialog
+          open={isRegenerateOpen}
+          onOpenChange={(open) => setIsRegenerateOpen(open)}
+          title="Regenerate Image"
+          description="Update your prompt to generate a new image."
+          className="w-[95vw] max-w-xl"
+        >
+          <div className="flex flex-col gap-3">
+            <Textarea
+              value={regeneratePrompt}
+              onChange={(e) => setRegeneratePrompt(e.target.value)}
+              placeholder="e.g. A futuristic city at sunset..."
+              rows={4}
+              className="resize-none"
+              autoFocus
+            />
+            <div className="flex justify-between items-center pt-2">
+              <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <SelectTrigger className="w-[140px] h-9 text-xs">
+                  <SelectValue placeholder="Ratio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1:1">1:1 Square</SelectItem>
+                  <SelectItem value="16:9">16:9 Landscape</SelectItem>
+                  <SelectItem value="9:16">9:16 Portrait</SelectItem>
+                  <SelectItem value="4:3">4:3 Landscape</SelectItem>
+                  <SelectItem value="3:4">3:4 Portrait</SelectItem>
+                  <SelectItem value="21:9">21:9 Cinematic</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setIsRegenerateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={executeRegenerate} disabled={!regeneratePrompt.trim()} className="gap-1.5 h-9">
+                  <AIIcon className="w-4 h-4" />
+                  Regenerate
+                </Button>
+              </div>
+            </div>
+          </div>
+        </EditorDialog>
+      )}
+
       {isCropperOpen && (
         <ImageCropper
           isOpen={isCropperOpen}
           onClose={() => setIsCropperOpen(false)}
           imageSrc={node.attrs.src}
-          onCropApply={(base64Str) => {
+          onCropApply={async (base64Str) => {
+            const onImageUpload = extension.options?.onImageUpload;
+            let finalSrc = base64Str;
+            
+            if (onImageUpload) {
+              // Immediately show the cropped image while uploading
+              updateAttributes({
+                src: base64Str,
+                width: null,
+                height: null,
+              });
+              
+              try {
+                const response = await fetch(base64Str);
+                const blob = await response.blob();
+                const file = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
+                finalSrc = await onImageUpload(file);
+              } catch (e) {
+                console.error("Failed to upload cropped image:", e);
+                // On failure, it will just keep the base64 string
+              }
+            }
+            
             updateAttributes({
-              src: base64Str,
+              src: finalSrc,
               width: null,
               height: null,
             });

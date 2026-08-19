@@ -3,22 +3,42 @@
 import { Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import {
+  AlignLeft,
+  ArrowDownRight,
+  ArrowUpRight,
   Bold,
+  CheckCircle,
+  ChevronDown,
   Code,
   Eraser,
   Highlighter,
   Italic,
+  Languages,
   Link as LinkIcon,
   Palette,
   Strikethrough,
   Underline,
   Unlink,
+  Wand2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { AIIcon } from "./AIIcon";
+import { cn } from "./lib/utils";
 import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 const PRESET_COLORS = [
   "#000000",
@@ -33,14 +53,19 @@ const PRESET_COLORS = [
 
 interface InlineBubbleMenuProps {
   editor: Editor | null;
+  onInlineAiAction?: (action: string) => void;
 }
 
-export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
+export function InlineBubbleMenu({
+  editor,
+  onInlineAiAction,
+}: InlineBubbleMenuProps) {
   const [isLinkOpen, setIsLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkTitle, setLinkTitle] = useState("");
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [isHighlightOpen, setIsHighlightOpen] = useState(false);
+  const [isAskAiOpen, setIsAskAiOpen] = useState(false);
 
   // Sync link url when popover opens
   useEffect(() => {
@@ -58,6 +83,13 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
     <BubbleMenu
       editor={editor}
       shouldShow={({ editor, state }) => {
+        if (!editor.isEditable) return false;
+        if (editor.isActive("image")) return false;
+
+        // Don't hide if the link or color popover is open
+        if (isLinkOpen || isColorOpen || isHighlightOpen || isAskAiOpen)
+          return true;
+
         const { from, to } = state.selection;
         const isEmpty = from === to;
         const isTable = editor.isActive("table");
@@ -84,9 +116,23 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
           variant="ghost"
           size="sm"
           className={`h-8 w-8 p-0 ${
-            editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""
+            (editor.isActive("heading")
+              ? editor.getAttributes("textStyle").fontWeight !== "400"
+              : editor.isActive("bold"))
+              ? "bg-accent text-accent-foreground"
+              : ""
           }`}
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={() => {
+            if (editor.isActive("heading")) {
+              if (editor.getAttributes("textStyle").fontWeight !== "400") {
+                editor.chain().focus().setFontWeight("400").run();
+              } else {
+                editor.chain().focus().unsetFontWeight().run();
+              }
+            } else {
+              editor.chain().focus().toggleBold().run();
+            }
+          }}
           title="Bold"
         >
           <Bold className="h-4 w-4" />
@@ -148,9 +194,13 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
       </div>
 
       <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
-        {/* Text Color Popover */}
-        <Popover open={isColorOpen} onOpenChange={setIsColorOpen}>
-          <PopoverTrigger asChild>
+        {/* Text Color Dropdown */}
+        <DropdownMenu
+          open={isColorOpen}
+          onOpenChange={setIsColorOpen}
+          modal={false}
+        >
+          <DropdownMenuTrigger asChild>
             <Button
               onMouseDown={(e) => e.preventDefault()}
               type="button"
@@ -167,8 +217,12 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
                 }}
               />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-52 p-3" align="center">
+          </DropdownMenuTrigger>
+          <DropdownMenuContent disablePortal={true}
+            className="w-52 p-3"
+            align="center"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1">
                 {PRESET_COLORS.map((color) => (
@@ -201,16 +255,21 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
                   onChange={(e) => {
                     editor.chain().focus().setColor(e.target.value).run();
                   }}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="h-8 w-full p-0 border border-border rounded-md cursor-pointer overflow-hidden flex-1 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
                 />
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        {/* Highlight Popover */}
-        <Popover open={isHighlightOpen} onOpenChange={setIsHighlightOpen}>
-          <PopoverTrigger asChild>
+        {/* Highlight Dropdown */}
+        <DropdownMenu
+          open={isHighlightOpen}
+          onOpenChange={setIsHighlightOpen}
+          modal={false}
+        >
+          <DropdownMenuTrigger asChild>
             <Button
               onMouseDown={(e) => e.preventDefault()}
               type="button"
@@ -228,8 +287,12 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
                 }}
               />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-52 p-3" align="center">
+          </DropdownMenuTrigger>
+          <DropdownMenuContent disablePortal={true}
+            className="w-52 p-3"
+            align="center"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1">
                 {PRESET_COLORS.map((color) => (
@@ -266,18 +329,23 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
                       .toggleHighlight({ color: e.target.value })
                       .run();
                   }}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="h-8 w-full p-0 border border-border rounded-md cursor-pointer overflow-hidden flex-1 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
                 />
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex items-center gap-0.5 pl-1">
-        {/* Link Popover */}
-        <Popover open={isLinkOpen} onOpenChange={setIsLinkOpen}>
-          <PopoverTrigger asChild>
+        {/* Link Dropdown */}
+        <DropdownMenu
+          open={isLinkOpen}
+          onOpenChange={setIsLinkOpen}
+          modal={false}
+        >
+          <DropdownMenuTrigger asChild>
             <Button
               onMouseDown={(e) => e.preventDefault()}
               type="button"
@@ -292,19 +360,25 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
             >
               <LinkIcon className="h-4 w-4" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-60 p-2" align="center">
+          </DropdownMenuTrigger>
+          <DropdownMenuContent disablePortal={true}
+            className="w-60 p-2"
+            align="center"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <div className="flex flex-col gap-2">
               <div className="space-y-1">
                 <Input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder="https://example.com"
                   className="h-8 text-xs"
                 />
                 <Input
                   value={linkTitle}
                   onChange={(e) => setLinkTitle(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder="Link title (optional)..."
                   className="h-8 text-xs"
                 />
@@ -344,8 +418,84 @@ export function InlineBubbleMenu({ editor }: InlineBubbleMenuProps) {
                 <Unlink className="h-3 w-3 mr-2" /> Remove Link
               </Button>
             )}
-          </PopoverContent>
-        </Popover>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="w-px h-5 bg-border mx-1" />
+        <DropdownMenu
+          open={isAskAiOpen}
+          onOpenChange={setIsAskAiOpen}
+          modal={false}
+        >
+          <DropdownMenuTrigger asChild>
+            <Button
+              onMouseDown={(e) => e.preventDefault()}
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 px-2 gap-1 ml-1 text-xs font-medium")}
+              aria-label="AI Actions"
+            >
+              <AIIcon className="h-3 w-3" />
+              <span>AI</span>
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent disablePortal={true}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            align="end"
+            className="w-56 p-1.5"
+          >
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Refine
+            </div>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("fix_grammar")}
+              className="cursor-pointer"
+            >
+              <CheckCircle className="mr-2 h-4 w-4 opacity-70" />
+              <span>Fix Grammar</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("simplify")}
+              className="cursor-pointer"
+            >
+              <Wand2 className="mr-2 h-4 w-4 opacity-70" />
+              <span>Simplify</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("complete_sentence")}
+              className="cursor-pointer mb-1"
+            >
+              <AlignLeft className="mr-2 h-4 w-4 opacity-70" />
+              <span>Complete Sentence</span>
+            </DropdownMenuItem>
+
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Rewrite
+            </div>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("make_longer")}
+              className="cursor-pointer"
+            >
+              <ArrowUpRight className="mr-2 h-4 w-4 opacity-70" />
+              <span>Make Longer</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("make_shorter")}
+              className="cursor-pointer"
+            >
+              <ArrowDownRight className="mr-2 h-4 w-4 opacity-70" />
+              <span>Make Shorter</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onInlineAiAction?.("translate")}
+              className="cursor-pointer mb-1"
+            >
+              <Languages className="mr-2 h-4 w-4 opacity-70" />
+              <span>Translate</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </BubbleMenu>
   );

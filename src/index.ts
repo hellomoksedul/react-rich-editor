@@ -1,6 +1,8 @@
 import "./tailwind.css";
 export { RichTextEditor } from "./RichTextEditor";
 export type { RichTextEditorProps } from "./RichTextEditor";
+export { RichTextViewer } from "./RichTextViewer";
+export type { RichTextViewerProps } from "./RichTextViewer";
 
 export { Toolbar } from "./Toolbar";
 export { getEditorExtensions } from "./extensions";
@@ -16,8 +18,16 @@ export type { MediaItem } from "./lib/image-upload";
 export { FindReplace } from "./FindReplace";
 export { KeyboardShortcuts } from "./KeyboardShortcuts";
 export { AiGenerator } from "./AiGenerator";
-export { AskAiDialog, DEFAULT_AI_PROVIDERS } from "./AskAiDialog";
+export {
+  AskAiDialog,
+  DEFAULT_AI_PROVIDERS,
+} from "./AskAiDialog";
+export { createAskAiHandler, type AiConfig } from "./ai-handler";
 export type { AiProviderConfig, AiCreditsInfo, AskAiParams, AskAiHandler } from "./AskAiDialog";
+export { GenerateImageDialog } from "./GenerateImageDialog";
+export type { GenerateImageDialogProps } from "./GenerateImageDialog";
+export { TranslateDialog } from "./TranslateDialog";
+export type { TranslateDialogProps } from "./TranslateDialog";
 export { TableBubbleMenu } from "./TableBubbleMenu";
 export { InlineBubbleMenu } from "./InlineBubbleMenu";
 export { ResizableImage } from "./ResizableImage";

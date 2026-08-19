@@ -7,10 +7,13 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  ArrowDownRight,
+  ArrowUpRight,
   BarChart3,
   Blocks,
   Bold,
   Check,
+  CheckCircle,
   CheckSquare,
   ChevronDown,
   Code,
@@ -28,12 +31,15 @@ import {
   HelpCircle,
   Highlighter,
   Image,
+  ImagePlus,
   Indent,
   Italic,
+  Languages,
   Link,
   List,
   ListOrdered,
   ListTree,
+  MessageSquarePlus,
   Minus,
   MoreHorizontal,
   MousePointerClick,
@@ -51,7 +57,6 @@ import {
   Search,
   Sigma,
   Smile,
-  Sparkles,
   Strikethrough,
   Subscript,
   Superscript,
@@ -59,11 +64,13 @@ import {
   Underline,
   Undo,
   Unlink,
+  Wand2,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaYoutube } from "react-icons/fa";
 
+import { AIIcon } from "./AIIcon";
 import { DEFAULT_CHART_POINTS } from "./ChartBlockExtension";
 import { EditChartDialog } from "./EditChartDialog";
 import { EquationEditDialog } from "./EquationEditDialog";
@@ -117,6 +124,7 @@ interface ToolbarProps {
   isSimple?: boolean;
   tocItems: TocItem[];
   onTocNavigate: (item: TocItem) => void;
+  onInlineAiAction?: (action: string) => void;
 }
 
 const ToolbarButton = ({
@@ -276,6 +284,7 @@ export function Toolbar({
   isSimple = false,
   tocItems,
   onTocNavigate,
+  onInlineAiAction,
 }: ToolbarProps) {
   // Local state for link input in popover
   const [linkUrl, setLinkUrl] = useState("");
@@ -362,7 +371,7 @@ export function Toolbar({
           isSimple ? "bg-transparent" : "border-b border-border bg-muted/30",
         )}
       >
-        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
+        <>
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
@@ -377,9 +386,10 @@ export function Toolbar({
           >
             <Redo className="h-4 w-4" />
           </ToolbarButton>
-        </div>
+        </>
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
-        <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
+        <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -420,31 +430,50 @@ export function Toolbar({
             >
               <DropdownMenuItem
                 onClick={() => handleHeadingChange("paragraph")}
+                className={getCurrentHeading() === "paragraph" ? "bg-accent" : ""}
               >
                 <Pilcrow className="mr-2 h-4 w-4" />
                 <span>Normal</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h1")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h1")}
+                className={getCurrentHeading() === "h1" ? "bg-accent" : ""}
+              >
                 <Heading1 className="mr-2 h-4 w-4" />
                 <span>Heading 1</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h2")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h2")}
+                className={getCurrentHeading() === "h2" ? "bg-accent" : ""}
+              >
                 <Heading2 className="mr-2 h-4 w-4" />
                 <span>Heading 2</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h3")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h3")}
+                className={getCurrentHeading() === "h3" ? "bg-accent" : ""}
+              >
                 <Heading3 className="mr-2 h-4 w-4" />
                 <span>Heading 3</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h4")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h4")}
+                className={getCurrentHeading() === "h4" ? "bg-accent" : ""}
+              >
                 <Heading4 className="mr-2 h-4 w-4" />
                 <span>Heading 4</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h5")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h5")}
+                className={getCurrentHeading() === "h5" ? "bg-accent" : ""}
+              >
                 <Heading5 className="mr-2 h-4 w-4" />
                 <span>Heading 5</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleHeadingChange("h6")}>
+              <DropdownMenuItem 
+                onClick={() => handleHeadingChange("h6")}
+                className={getCurrentHeading() === "h6" ? "bg-accent" : ""}
+              >
                 <Heading6 className="mr-2 h-4 w-4" />
                 <span>Heading 6</span>
               </DropdownMenuItem>
@@ -764,14 +793,15 @@ export function Toolbar({
               </PopoverContent>
             </Popover>
           </div>
-        </div>
+        </>
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
         {/* 
           --------------------------------------------------------
           2. BASIC FORMATTING
           --------------------------------------------------------
         */}
-        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
+        <>
           <ToolbarButton
             onClick={handleToggleBold}
             active={isBoldActive}
@@ -811,30 +841,35 @@ export function Toolbar({
             >
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={editor.isActive("underline") ? "bg-accent" : ""}
               >
                 <Underline className="mr-2 h-4 w-4" />
                 <span>Underline</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={editor.isActive("strike") ? "bg-accent" : ""}
               >
                 <Strikethrough className="mr-2 h-4 w-4" />
                 <span>Strikethrough</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleCode().run()}
+                className={editor.isActive("code") ? "bg-accent" : ""}
               >
                 <Code className="mr-2 h-4 w-4" />
                 <span>Inline Code</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleSubscript().run()}
+                className={editor.isActive("subscript") ? "bg-accent" : ""}
               >
                 <Subscript className="mr-2 h-4 w-4" />
                 <span>Subscript (Ctrl+,)</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleSuperscript().run()}
+                className={editor.isActive("superscript") ? "bg-accent" : ""}
               >
                 <Superscript className="mr-2 h-4 w-4" />
                 <span>Superscript (Ctrl+.)</span>
@@ -855,14 +890,15 @@ export function Toolbar({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </>
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
         {/* 
           --------------------------------------------------------
           3. ALIGNMENT
           --------------------------------------------------------
         */}
-        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
+        <>
           <DropdownMenu>
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
@@ -899,6 +935,7 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("left").run()
                 }
+                className={editor.isActive({ textAlign: "left" }) || (!editor.isActive({ textAlign: "center" }) && !editor.isActive({ textAlign: "right" }) && !editor.isActive({ textAlign: "justify" })) ? "bg-accent" : ""}
               >
                 <AlignLeft className="mr-2 h-4 w-4" />
                 <span>Left</span>
@@ -907,6 +944,7 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("center").run()
                 }
+                className={editor.isActive({ textAlign: "center" }) ? "bg-accent" : ""}
               >
                 <AlignCenter className="mr-2 h-4 w-4" />
                 <span>Center</span>
@@ -915,6 +953,7 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("right").run()
                 }
+                className={editor.isActive({ textAlign: "right" }) ? "bg-accent" : ""}
               >
                 <AlignRight className="mr-2 h-4 w-4" />
                 <span>Right</span>
@@ -923,6 +962,7 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("justify").run()
                 }
+                className={editor.isActive({ textAlign: "justify" }) ? "bg-accent" : ""}
               >
                 <AlignJustify className="mr-2 h-4 w-4" />
                 <span>Justify Align</span>
@@ -955,14 +995,15 @@ export function Toolbar({
               </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </>
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
         {/* 
           --------------------------------------------------------
           4. LISTS
           --------------------------------------------------------
         */}
-        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
+        <>
           <DropdownMenu>
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
@@ -989,18 +1030,21 @@ export function Toolbar({
             >
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
+                className={editor.isActive("bulletList") ? "bg-accent" : ""}
               >
                 <List className="mr-2 h-4 w-4" />
                 <span>Bullet List</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                className={editor.isActive("orderedList") ? "bg-accent" : ""}
               >
                 <ListOrdered className="mr-2 h-4 w-4" />
                 <span>Numbered List</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleTaskList().run()}
+                className={editor.isActive("taskList") ? "bg-accent" : ""}
               >
                 <CheckSquare className="mr-2 h-4 w-4" />
                 <span>Task List</span>
@@ -1025,7 +1069,8 @@ export function Toolbar({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </>
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
         {/* 
           --------------------------------------------------------
@@ -1033,7 +1078,7 @@ export function Toolbar({
           --------------------------------------------------------
         */}
         {!isSimple && (
-          <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
+          <>
             <Popover
               open={isLinkPopoverOpen}
               onOpenChange={setIsLinkPopoverOpen}
@@ -1278,6 +1323,7 @@ export function Toolbar({
                       onClick={() =>
                         editor.chain().focus().toggleBlockquote().run()
                       }
+                      className={editor.isActive("blockquote") ? "bg-accent" : ""}
                     >
                       <Quote className="mr-2 h-4 w-4" />
                       <span>Blockquote</span>
@@ -1286,6 +1332,7 @@ export function Toolbar({
                       onClick={() =>
                         editor.chain().focus().toggleCodeBlock().run()
                       }
+                      className={editor.isActive("codeBlock") ? "bg-accent" : ""}
                     >
                       <FileCode className="mr-2 h-4 w-4" />
                       <span>Code Block</span>
@@ -1387,8 +1434,9 @@ export function Toolbar({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </>
         )}
+        {!isSimple && <div className="w-px h-5 bg-border mx-1 shrink-0" />}
 
         {/* 
           --------------------------------------------------------
@@ -1396,7 +1444,7 @@ export function Toolbar({
           --------------------------------------------------------
         */}
         {!isSimple && (
-          <div className="flex items-center gap-0.5">
+          <>
             {/* Table of Contents */}
             <Popover>
               <Tooltip delayDuration={300}>
@@ -1488,14 +1536,99 @@ export function Toolbar({
             </ToolbarButton>
 
             <div className="w-px h-6 bg-border mx-1" />
-            <ToolbarButton
-              onClick={() => setIsAskAiOpen(!isAskAiOpen)}
-              active={isAskAiOpen}
-              title="Ask AI"
-            >
-              <Sparkles className="h-4 w-4" />
-            </ToolbarButton>
-          </div>
+            <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      onMouseDown={(e) => e.preventDefault()}
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-8 px-2 gap-1 ml-1 text-xs font-medium",
+                        isAskAiOpen && "bg-accent text-accent-foreground",
+                      )}
+                      aria-label="AI Actions"
+                    >
+                      <AIIcon className="h-3 w-3" />
+                      <span>AI</span>
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+              <DropdownMenuContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                align="start"
+                className="w-56 p-1.5"
+              >
+                <DropdownMenuItem
+                  onClick={() => setIsAskAiOpen(!isAskAiOpen)}
+                  className="cursor-pointer font-medium mb-1"
+                >
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  <span>AI Chat</span>
+                </DropdownMenuItem>
+
+                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Refine
+                </div>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("fix_grammar")}
+                  className="cursor-pointer"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Fix Grammar</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("simplify")}
+                  className="cursor-pointer"
+                >
+                  <Wand2 className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Simplify</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("complete_sentence")}
+                  className="cursor-pointer mb-1"
+                >
+                  <AlignLeft className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Complete Sentence</span>
+                </DropdownMenuItem>
+
+                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Rewrite
+                </div>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("make_longer")}
+                  className="cursor-pointer"
+                >
+                  <ArrowUpRight className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Make Longer</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("make_shorter")}
+                  className="cursor-pointer"
+                >
+                  <ArrowDownRight className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Make Shorter</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("translate")}
+                  className="cursor-pointer mb-1"
+                >
+                  <Languages className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Translate</span>
+                </DropdownMenuItem>
+
+                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Generate
+                </div>
+                <DropdownMenuItem
+                  onClick={() => onInlineAiAction?.("generate_image")}
+                  className="cursor-pointer"
+                >
+                  <ImagePlus className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Generate Image</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
       </div>
 

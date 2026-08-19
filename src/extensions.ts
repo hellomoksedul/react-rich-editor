@@ -45,6 +45,53 @@ import { SlashCommand, type SlashCommandOptions } from "./SlashCommand";
  * don't need to depend on @tiptap/extension-table-of-contents directly. */
 export type TocItem = TableOfContentDataItem;
 
+import { Extension } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+
+export const AiLoadingExtension = Extension.create({
+  name: "aiLoading",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("aiLoading"),
+        state: {
+          init() {
+            return { isLoading: false, from: 0, to: 0 };
+          },
+          apply(tr, value) {
+            const meta = tr.getMeta("aiLoading");
+            if (meta !== undefined) {
+              return meta;
+            }
+            if (value.isLoading) {
+              return {
+                isLoading: true,
+                from: tr.mapping.map(value.from),
+                to: tr.mapping.map(value.to),
+              };
+            }
+            return value;
+          },
+        },
+        props: {
+          decorations(state) {
+            const pluginState = this.getState(state);
+            if (!pluginState) return DecorationSet.empty;
+            const { isLoading, from, to } = pluginState;
+            if (!isLoading || from === to) return DecorationSet.empty;
+            
+            const deco = Decoration.inline(from, to, {
+              class: "animate-pulse text-muted-foreground bg-muted rounded px-1",
+            });
+            return DecorationSet.create(state.doc, [deco]);
+          },
+        },
+      }),
+    ];
+  },
+});
+
 export type GetEditorExtensionsOptions = SlashCommandOptions & {
   /**
    * Fires whenever the document's heading structure changes, with the
@@ -52,6 +99,8 @@ export type GetEditorExtensionsOptions = SlashCommandOptions & {
    * to power a "Table of Contents" navigation UI. Omit if you don't need one.
    */
   onTocUpdate?: (items: TocItem[]) => void;
+  onGenerateImage?: (prompt: string, options?: { aspectRatio?: string }) => Promise<string>;
+  onImageUpload?: (file: File) => Promise<string>;
 };
 
 export const getEditorExtensions = (
@@ -158,7 +207,14 @@ export const getEditorExtensions = (
       };
     },
   }),
-  Image.extend({
+  Image.extend<any>({
+    addOptions() {
+      return {
+        ...this.parent?.(),
+        onGenerateImage: undefined,
+        onImageUpload: undefined,
+      };
+    },
     addAttributes() {
       return {
         ...this.parent?.(),
@@ -185,6 +241,8 @@ export const getEditorExtensions = (
   }).configure({
     inline: true,
     allowBase64: true,
+    onGenerateImage: options.onGenerateImage,
+    onImageUpload: options.onImageUpload,
   }),
   Link.extend({
     addAttributes() {
@@ -249,6 +307,7 @@ export const getEditorExtensions = (
     controls: false,
     nocookie: true,
   }),
+  AiLoadingExtension,
   ButtonBlock,
   CustomCodeBlock,
   ChartBlock,

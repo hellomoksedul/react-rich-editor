@@ -40,12 +40,14 @@ export function ImageCropper({
 }: ImageCropperProps) {
   const [crop, setCrop] = useState<Crop>();
   const [aspect, setAspect] = useState<number | undefined>(undefined);
-  const [selectedRatio, setSelectedRatio] = useState<
-    number | string | undefined
-  >("original");
+  const [selectedRatio, setSelectedRatio] = useState<number | string | undefined>("original");
   const imgRef = useRef<HTMLImageElement>(null);
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [originalAspect, setOriginalAspect] = useState<number>(1);
+  
+  // CORS fallback states
+  const [crossOriginAttribute, setCrossOriginAttribute] = useState<"anonymous" | undefined>("anonymous");
+  const [isTainted, setIsTainted] = useState(false);
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
@@ -61,6 +63,15 @@ export function ImageCropper({
       height,
     );
     setCrop(crop);
+  };
+
+  const onImageError = () => {
+    // If the image failed to load with crossOrigin="anonymous", it's likely a CORS issue.
+    // We retry loading it without the crossOrigin attribute.
+    if (crossOriginAttribute === "anonymous") {
+      setCrossOriginAttribute(undefined);
+      setIsTainted(true);
+    }
   };
 
   const handleRatioClick = (value: number | string | undefined) => {
@@ -172,10 +183,17 @@ export function ImageCropper({
                   alt="Crop preview"
                   className="max-h-[60vh] object-contain"
                   onLoad={onImageLoad}
-                  crossOrigin="anonymous" // required for drawing to canvas
+                  onError={onImageError}
+                  crossOrigin={crossOriginAttribute} // "anonymous" or undefined
                 />
               </ReactCrop>
             </div>
+            
+            {isTainted && (
+              <div className="absolute top-4 left-4 right-4 bg-destructive/90 text-destructive-foreground p-3 rounded-md text-sm shadow-md z-20">
+                <strong>Cross-Origin Restriction:</strong> This image is hosted on an external server that blocks direct manipulation. You can preview it, but cropping is disabled.
+              </div>
+            )}
           </div>
 
           {/* Right Side: Controls */}
@@ -215,8 +233,8 @@ export function ImageCropper({
                 })}
               </div>
             </div>
-
-            <div className="flex mt-4 items-center justify-between pt-4 shrink-0">
+            {/* Actions */}
+            <div className="flex justify-between items-center pt-6 border-t border-border mt-auto">
               <Button
                 variant="ghost"
                 size="sm"
@@ -237,6 +255,7 @@ export function ImageCropper({
                 <Button
                   className="w-20 border border-transparent box-border"
                   onClick={handleApply}
+                  disabled={isTainted}
                 >
                   Apply
                 </Button>
