@@ -19,6 +19,7 @@ export { AiGenerator } from "./AiGenerator";
 export { AskAiDialog, DEFAULT_AI_PROVIDERS } from "./AskAiDialog";
 export type { AiProviderConfig, AiCreditsInfo, AskAiParams, AskAiHandler } from "./AskAiDialog";
 export { TableBubbleMenu } from "./TableBubbleMenu";
+export { InlineBubbleMenu } from "./InlineBubbleMenu";
 export { ResizableImage } from "./ResizableImage";
 export { ResizableYoutube } from "./ResizableYoutube";
 export { ButtonBlock } from "./ButtonBlockExtension";

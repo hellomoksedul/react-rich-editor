@@ -140,7 +140,7 @@ export function FindReplace({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search text..."
-                className="flex-1"
+                className="flex-1 focus-visible:z-10"
                 autoFocus
               />
               <div className="flex gap-1">
@@ -150,7 +150,7 @@ export function FindReplace({
                   onClick={findPrevious}
                   disabled={currentMatch <= 1 || totalMatches === 0}
                   title="Previous (Shift+Enter)"
-                  className="h-10 w-10 p-0"
+                  className="h-9 w-9 p-0 focus-visible:z-10"
                 >
                   <ArrowUp className="h-4 w-4" />
                 </Button>
@@ -160,7 +160,7 @@ export function FindReplace({
                   onClick={findNext}
                   disabled={currentMatch >= totalMatches || totalMatches === 0}
                   title="Next (Enter)"
-                  className="h-10 w-10 p-0"
+                  className="h-9 w-9 p-0 focus-visible:z-10"
                 >
                   <ArrowDown className="h-4 w-4" />
                 </Button>

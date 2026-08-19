@@ -1,6 +1,7 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import {
   AlignCenter,
   AlignJustify,
@@ -9,6 +10,7 @@ import {
   BarChart3,
   Blocks,
   Bold,
+  Check,
   CheckSquare,
   ChevronDown,
   Code,
@@ -17,6 +19,12 @@ import {
   Eraser,
   Eye,
   FileCode,
+  Heading1,
+  Heading2,
+  Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
   HelpCircle,
   Highlighter,
   Image,
@@ -29,17 +37,20 @@ import {
   Minus,
   MoreHorizontal,
   MousePointerClick,
+  MoveVertical,
   Outdent,
   Palette,
   Paperclip,
   PenLine,
   PenTool,
+  Pilcrow,
   Plus,
   Quote,
   Redo,
   RemoveFormatting,
   Search,
   Sigma,
+  Smile,
   Sparkles,
   Strikethrough,
   Subscript,
@@ -48,6 +59,7 @@ import {
   Underline,
   Undo,
   Unlink,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaYoutube } from "react-icons/fa";
@@ -78,13 +90,6 @@ import {
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -188,6 +193,71 @@ function getEffectiveFontSize(editor: Editor): number {
   return 16;
 }
 
+const FONTS = [
+  "DM Sans",
+  "Geist",
+  "Inter",
+  "Poppins",
+  "Manrope",
+  "Plus Jakarta Sans",
+  "Public Sans",
+  "Montserrat",
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Oswald",
+  "Source Sans Pro",
+  "Raleway",
+  "PT Sans",
+  "Noto Sans",
+  "Nunito",
+  "Ubuntu",
+  "Rubik",
+  "Work Sans",
+  "Fira Sans",
+  "Quicksand",
+  "Barlow",
+  "Merriweather",
+  "Playfair Display",
+  "Lora",
+  "PT Serif",
+  "Bitter",
+  "Crimson Text",
+  "Inconsolata",
+  "Josefin Sans",
+  "Oxygen",
+  "Dosis",
+  "Cabin",
+  "Anton",
+  "Cairo",
+  "Hind",
+  "Dancing Script",
+  "Pacifico",
+  "Arial",
+  "Helvetica",
+  "Verdana",
+  "Tahoma",
+  "Trebuchet MS",
+  "Impact",
+  "Arial Black",
+  "Times New Roman",
+  "Times",
+  "Georgia",
+  "Garamond",
+  "Palatino",
+  "Baskerville",
+  "Courier New",
+  "Courier",
+  "Monaco",
+  "Consolas",
+  "Lucida Console",
+  "sans-serif",
+  "serif",
+  "monospace",
+  "cursive",
+  "fantasy",
+];
+
 export function Toolbar({
   editor,
   onImageUpload,
@@ -218,6 +288,8 @@ export function Toolbar({
 
   const [isEquationDialogOpen, setIsEquationDialogOpen] = useState(false);
   const [isChartDialogOpen, setIsChartDialogOpen] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [fontSearch, setFontSearch] = useState("");
 
   // Force re-render of the toolbar when the editor's state changes
   // We do this locally instead of in RichTextEditor to prevent infinite loops.
@@ -308,43 +380,142 @@ export function Toolbar({
         </div>
 
         <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
-          <Select
-            value={getCurrentHeading()}
-            onValueChange={handleHeadingChange}
-          >
-            <SelectTrigger
-              onMouseDown={(e) => e.preventDefault()}
-              className="h-8 w-32.5"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem
-                value="paragraph"
-                className="pl-2 [&>span.absolute]:hidden"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-12 px-2"
+                onMouseDown={(e) => e.preventDefault()}
+                aria-label="Text Type"
               >
-                Normal
-              </SelectItem>
-              <SelectItem value="h1" className="pl-2 [&>span.absolute]:hidden">
-                Heading 1
-              </SelectItem>
-              <SelectItem value="h2" className="pl-2 [&>span.absolute]:hidden">
-                Heading 2
-              </SelectItem>
-              <SelectItem value="h3" className="pl-2 [&>span.absolute]:hidden">
-                Heading 3
-              </SelectItem>
-              <SelectItem value="h4" className="pl-2 [&>span.absolute]:hidden">
-                Heading 4
-              </SelectItem>
-              <SelectItem value="h5" className="pl-2 [&>span.absolute]:hidden">
-                Heading 5
-              </SelectItem>
-              <SelectItem value="h6" className="pl-2 [&>span.absolute]:hidden">
-                Heading 6
-              </SelectItem>
-            </SelectContent>
-          </Select>
+                {getCurrentHeading() === "paragraph" && (
+                  <Pilcrow className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h1" && (
+                  <Heading1 className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h2" && (
+                  <Heading2 className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h3" && (
+                  <Heading3 className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h4" && (
+                  <Heading4 className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h5" && (
+                  <Heading5 className="h-4 w-4" />
+                )}
+                {getCurrentHeading() === "h6" && (
+                  <Heading6 className="h-4 w-4" />
+                )}
+                <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              align="start"
+              className="w-45"
+            >
+              <DropdownMenuItem
+                onClick={() => handleHeadingChange("paragraph")}
+              >
+                <Pilcrow className="mr-2 h-4 w-4" />
+                <span>Normal</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h1")}>
+                <Heading1 className="mr-2 h-4 w-4" />
+                <span>Heading 1</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h2")}>
+                <Heading2 className="mr-2 h-4 w-4" />
+                <span>Heading 2</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h3")}>
+                <Heading3 className="mr-2 h-4 w-4" />
+                <span>Heading 3</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h4")}>
+                <Heading4 className="mr-2 h-4 w-4" />
+                <span>Heading 4</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h5")}>
+                <Heading5 className="mr-2 h-4 w-4" />
+                <span>Heading 5</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleHeadingChange("h6")}>
+                <Heading6 className="mr-2 h-4 w-4" />
+                <span>Heading 6</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Font Family Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 w-30 justify-between ml-1 text-xs border border-input bg-transparent"
+                onMouseDown={(e) => e.preventDefault()}
+                aria-label="Font Family"
+              >
+                <span className="truncate">
+                  {editor.getAttributes("textStyle").fontFamily || "DM Sans"}
+                </span>
+                <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              align="start"
+              className="w-50 p-1"
+            >
+              <div className="flex items-center border-b border-border px-2 pb-1 mb-1">
+                <Search className="mr-2 h-4 w-4 opacity-50 shrink-0" />
+                <input
+                  placeholder="Search fonts..."
+                  className="w-full bg-transparent outline-none text-sm h-8"
+                  value={fontSearch}
+                  onChange={(e) => setFontSearch(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                {fontSearch && (
+                  <button
+                    onClick={() => setFontSearch("")}
+                    className="ml-1 opacity-50 hover:opacity-100 transition-opacity"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="max-h-62.5 overflow-y-auto">
+                {FONTS.filter((font) =>
+                  font.toLowerCase().includes(fontSearch.toLowerCase()),
+                ).map((font) => (
+                  <DropdownMenuItem
+                    key={font}
+                    onClick={() =>
+                      editor.chain().focus().setFontFamily(font).run()
+                    }
+                    className={cn(
+                      "flex items-center justify-between",
+                      editor.isActive("textStyle", { fontFamily: font })
+                        ? "bg-accent"
+                        : "",
+                    )}
+                  >
+                    <span className="truncate max-w-32.5">{font}</span>
+                    {editor.isActive("textStyle", { fontFamily: font }) && (
+                      <Check className="h-4 w-4 shrink-0" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Font Size Controls - Inline */}
           <div className="flex items-center border border-input rounded-md h-8 overflow-hidden bg-transparent">
@@ -435,7 +606,11 @@ export function Toolbar({
                   Text Color
                 </TooltipContent>
               </Tooltip>
-              <PopoverContent className="w-52 p-3" align="start">
+              <PopoverContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                className="w-52 p-3"
+                align="start"
+              >
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-1">
                     {PRESET_COLORS.map((color) => (
@@ -518,7 +693,11 @@ export function Toolbar({
                   Highlight
                 </TooltipContent>
               </Tooltip>
-              <PopoverContent className="w-52 p-3" align="start">
+              <PopoverContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                className="w-52 p-3"
+                align="start"
+              >
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-1">
                     {PRESET_COLORS.map((color) => (
@@ -626,7 +805,10 @@ export function Toolbar({
                 More Formatting
               </TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              align="start"
+            >
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
               >
@@ -709,7 +891,10 @@ export function Toolbar({
                 Alignment
               </TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              align="start"
+            >
               <DropdownMenuItem
                 onClick={() =>
                   editor.chain().focus().setTextAlign("left").run()
@@ -740,8 +925,34 @@ export function Toolbar({
                 }
               >
                 <AlignJustify className="mr-2 h-4 w-4" />
-                <span>Justify</span>
+                <span>Justify Align</span>
               </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <MoveVertical className="mr-2 h-4 w-4" />
+                  <span>Line Height</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {["1", "1.15", "1.5", "2", "2.5", "3"].map((height) => (
+                    <DropdownMenuItem
+                      key={height}
+                      onClick={() =>
+                        editor.chain().focus().setLineHeight(height).run()
+                      }
+                      className={
+                        editor.isActive({ lineHeight: height })
+                          ? "bg-accent"
+                          : ""
+                      }
+                    >
+                      <span className="ml-6">{height}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -772,7 +983,10 @@ export function Toolbar({
                 Lists & Indent
               </TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              align="start"
+            >
               <DropdownMenuItem
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
               >
@@ -847,7 +1061,11 @@ export function Toolbar({
                   Link
                 </TooltipContent>
               </Tooltip>
-              <PopoverContent className="w-60 p-2" align="start">
+              <PopoverContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                className="w-60 p-2"
+                align="start"
+              >
                 <div className="flex flex-col gap-2">
                   <div className="space-y-1">
                     <Input
@@ -897,6 +1115,59 @@ export function Toolbar({
                     <Unlink className="h-3 w-3 mr-2" /> Remove Link
                   </Button>
                 )}
+              </PopoverContent>
+            </Popover>
+
+            <Popover
+              open={isEmojiPickerOpen}
+              onOpenChange={setIsEmojiPickerOpen}
+            >
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      onMouseDown={(e) => e.preventDefault()}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-8 w-8 p-0",
+                        isEmojiPickerOpen && "bg-accent text-accent-foreground",
+                      )}
+                      aria-label="Insert Emoji"
+                    >
+                      <Smile className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="px-2 py-1.5 text-xs">
+                  Insert Emoji
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                className="w-auto p-0 border-none bg-transparent shadow-none [&_.epr-emoji-category-label]:text-xs [&_.epr-emoji-category-label]:font-medium"
+                align="center"
+              >
+                <EmojiPicker
+                  theme={Theme.DARK}
+                  onEmojiClick={(emojiData) => {
+                    editor.chain().focus().insertContent(emojiData.emoji).run();
+                    setIsEmojiPickerOpen(false);
+                  }}
+                  style={
+                    {
+                      "--epr-bg-color": "var(--popover)",
+                      "--epr-category-label-bg-color": "var(--popover)",
+                      "--epr-picker-border-color": "var(--border)",
+                      "--epr-search-border-color": "var(--border)",
+                      "--epr-search-input-bg-color": "transparent",
+                      "--epr-highlight-color": "var(--ring)",
+                      "--epr-text-color": "var(--foreground)",
+                      "--epr-search-input-text-color": "var(--foreground)",
+                    } as React.CSSProperties
+                  }
+                />
               </PopoverContent>
             </Popover>
 
@@ -990,7 +1261,10 @@ export function Toolbar({
                   Insert Items
                 </TooltipContent>
               </Tooltip>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                align="start"
+              >
                 {/* Editorial: text-authoring elements (headings/lists/task
                     list live on their own toolbar controls already, so this
                     submenu only covers what previously lived flat here). */}
@@ -1144,7 +1418,11 @@ export function Toolbar({
                   Table of Contents
                 </TooltipContent>
               </Tooltip>
-              <PopoverContent className="w-64 p-2" align="start">
+              <PopoverContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                className="w-64 p-2"
+                align="start"
+              >
                 {tocItems.length === 0 ? (
                   <p className="px-2 py-4 text-center text-xs text-muted-foreground">
                     No headings yet — add a Heading to build a table of
@@ -1193,14 +1471,6 @@ export function Toolbar({
             </ToolbarButton>
 
             <div className="w-px h-6 bg-border mx-1" />
-
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-              active={editor.isActive("codeBlock")}
-              title="Code Block"
-            >
-              <FileCode className="h-4 w-4" />
-            </ToolbarButton>
 
             <ToolbarButton
               onClick={() => setIsPreviewOpen(true)}

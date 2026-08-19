@@ -10,6 +10,13 @@ import {
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
   const [copied, setCopied] = useState(false);
@@ -27,21 +34,26 @@ function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
       {/* Absolute positioned actions (top right) */}
       <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
         {editor.isEditable ? (
-          <select
-            contentEditable={false}
-            className="bg-transparent text-[11px] font-medium text-muted-foreground hover:text-[#d4d4d4] outline-none cursor-pointer transition-colors px-2 py-1.5 rounded-md border border-[#2a2a2a] hover:bg-white/5"
-            defaultValue={node.attrs.language || "text"}
-            onChange={(e) => updateAttributes({ language: e.target.value })}
-          >
-            <option value="text">text</option>
-            <option value="javascript">javascript</option>
-            <option value="typescript">typescript</option>
-            <option value="html">html</option>
-            <option value="css">css</option>
-            <option value="python">python</option>
-            <option value="json">json</option>
-            <option value="bash">bash</option>
-          </select>
+          <div contentEditable={false}>
+            <Select
+              value={node.attrs.language || "text"}
+              onValueChange={(value) => updateAttributes({ language: value })}
+            >
+              <SelectTrigger className="h-7 w-25] bg-transparent text-[11px] font-medium text-muted-foreground hover:text-[#d4d4d4] outline-none cursor-pointer transition-colors px-2 py-0 rounded-md border border-[#2a2a2a] hover:bg-white/5 focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="text">text</SelectItem>
+                <SelectItem value="javascript">javascript</SelectItem>
+                <SelectItem value="typescript">typescript</SelectItem>
+                <SelectItem value="html">html</SelectItem>
+                <SelectItem value="css">css</SelectItem>
+                <SelectItem value="python">python</SelectItem>
+                <SelectItem value="json">json</SelectItem>
+                <SelectItem value="bash">bash</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         ) : (
           <span className="text-[11px] font-medium text-muted-foreground bg-transparent px-2 py-1.5 rounded-md border border-[#2a2a2a] select-none">
             {node.attrs.language || "text"}
@@ -56,25 +68,34 @@ function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
           onClick={handleCopy}
           contentEditable={false}
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-green-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
         </Button>
       </div>
 
       {/* Code Content with Line Numbers */}
       <div className="relative flex">
         {/* Line Numbers */}
-        <div 
+        <div
           className="flex flex-col select-none text-right pl-5 pr-4 py-5 text-[#666666] text-[13px] font-mono bg-transparent"
           contentEditable={false}
         >
           {Array.from({ length: lineCount }).map((_, i) => (
-            <div key={i} className="leading-[1.6] min-h-[1.3rem]">{i + 1}</div>
+            <div key={i} className="leading-[1.6] min-h-[1.3rem]">
+              {i + 1}
+            </div>
           ))}
         </div>
-        
+
         {/* Actual Code */}
-        <pre className="py-5 pr-28 pl-0 overflow-x-auto m-0 !bg-transparent flex-1 text-[13px] leading-[1.6] whitespace-pre">
-          <NodeViewContent as={"code" as any} className="block outline-none min-h-[1.3rem]" />
+        <pre className="py-5 pr-28 pl-0 overflow-x-auto m-0 bg-transparent! flex-1 text-[13px] leading-[1.6] whitespace-pre">
+          <NodeViewContent
+            as={"code" as any}
+            className="block outline-none min-h-[1.3rem]"
+          />
         </pre>
       </div>
     </NodeViewWrapper>

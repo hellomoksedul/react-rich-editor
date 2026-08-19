@@ -22,6 +22,7 @@ import { PreviewDialog } from "./PreviewDialog";
 import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
+import { InlineBubbleMenu } from "./InlineBubbleMenu";
 import { Toolbar } from "./Toolbar";
 
 export interface RichTextEditorProps {
@@ -346,6 +347,7 @@ export function RichTextEditor({
           </div>
         ) : (
           <>
+            <InlineBubbleMenu editor={editor} />
             <TableBubbleMenu editor={editor} />
             <ButtonBlockMenu editor={editor} />
             <LayoutMenu editor={editor} />

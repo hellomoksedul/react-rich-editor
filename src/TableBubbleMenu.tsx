@@ -13,6 +13,8 @@ import {
   PaintBucket,
   Rows,
   Trash2,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 import { Button } from "./ui/button";
@@ -168,6 +170,22 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
           title="Clear Cell Color"
         >
           <Eraser className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-0.5 border-r border-border pr-1 pl-1">
+        <Button onMouseDown={(e) => e.preventDefault()} 
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={`h-7 w-7 p-0 ${editor.getAttributes("table").fullWidth ? "bg-accent text-accent-foreground" : ""}`}
+          onClick={() => {
+            const isFullWidth = editor.getAttributes("table").fullWidth;
+            editor.chain().focus().updateAttributes("table", { fullWidth: !isFullWidth }).run();
+          }}
+          title={editor.getAttributes("table").fullWidth ? "Fit to content" : "Full width"}
+        >
+          {editor.getAttributes("table").fullWidth ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </Button>
       </div>
 

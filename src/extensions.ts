@@ -28,15 +28,17 @@ import StarterKit from "@tiptap/starter-kit";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ButtonBlock } from "./ButtonBlockExtension";
 import { ChartBlock } from "./ChartBlockExtension";
-import { LayoutItem, LayoutGroup } from "./LayoutExtension";
+import { CustomCodeBlock } from "./CodeBlockExtension";
 import { Equation } from "./EquationExtension";
 import { FileAttachment } from "./FileAttachmentExtension";
 import { FontSize } from "./FontSizeExtension";
 import { FontWeight } from "./FontWeightExtension";
+import { LineHeight } from "./LineHeightExtension";
+import { FontFamily } from "./FontFamilyExtension";
+import { LayoutGroup, LayoutItem } from "./LayoutExtension";
 import { ResizableImage } from "./ResizableImage";
 import { ResizableYoutube } from "./ResizableYoutube";
 import { SlashCommand, type SlashCommandOptions } from "./SlashCommand";
-import { CustomCodeBlock } from "./CodeBlockExtension";
 
 /** One entry in the table of contents, as reported by the TableOfContents
  * extension's onUpdate callback. Re-exported so consumers (e.g. Toolbar)
@@ -86,7 +88,52 @@ export const getEditorExtensions = (
   TaskItem.configure({
     nested: true,
   }),
-  Table.configure({
+  Table.extend({
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        fullWidth: {
+          default: true,
+          parseHTML: (element) =>
+            element.getAttribute("data-full-width") !== "false",
+          renderHTML: (attributes) => {
+            return {
+              "data-full-width": attributes.fullWidth ? "true" : "false",
+            };
+          },
+        },
+      };
+    },
+    addNodeView() {
+      const parentNodeView = this.parent?.();
+      if (!parentNodeView) return null;
+
+      return (props) => {
+        // Tiptap's default TableView ignores renderHTML, so we must manually patch the DOM.
+        const view = parentNodeView(props) as any;
+        if (view && view.dom) {
+          const table =
+            view.table || view.dom.querySelector("table") || view.dom;
+
+          const updateAttrs = (node: any) => {
+            const isFull = node.attrs.fullWidth !== false;
+            table.setAttribute("data-full-width", isFull ? "true" : "false");
+          };
+
+          updateAttrs(props.node);
+
+          if (view.update) {
+            const oldUpdate = view.update.bind(view);
+            view.update = (node: any) => {
+              updateAttrs(node);
+              return oldUpdate(node);
+            };
+          }
+        }
+        return view;
+      };
+    },
+  }).configure({
     resizable: true,
   }),
   TableRow,
@@ -169,7 +216,9 @@ export const getEditorExtensions = (
   TextStyle,
   FontSize,
   FontWeight,
+  FontFamily,
   Color,
+  LineHeight,
   Highlight.configure({
     multicolor: true,
   }),
