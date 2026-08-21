@@ -22,7 +22,6 @@ export interface AiProviderConfig {
   color: string;
 }
 
-
 export interface AiCreditsInfo {
   remaining: number;
   total: number;
@@ -125,9 +124,15 @@ export function AskAiDialog({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    if (!providers || providers.length === 0) return;
+    if (!providerId || !providers.some((p) => p.id === providerId)) {
+      setProviderId(providers[0].id);
+    }
+  }, [providers, providerId]);
+
+  useEffect(() => {
     if (!isOpen) return;
     setRecentPrompts(loadRecentPrompts(recentPromptsStorageKey));
-    if (!providerId && providers[0]) setProviderId(providers[0].id);
   }, [isOpen, recentPromptsStorageKey]);
 
   const reset = () => {
@@ -237,7 +242,7 @@ export function AskAiDialog({
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={providerId} onValueChange={setProviderId}>
+            <Select value={selectedProvider?.id || providerId} onValueChange={setProviderId}>
               <SelectTrigger className="w-45 h-9">
                 <SelectValue placeholder="Select provider" />
               </SelectTrigger>

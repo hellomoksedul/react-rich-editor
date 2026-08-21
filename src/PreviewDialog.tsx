@@ -13,7 +13,7 @@ export function PreviewDialog({ isOpen, onClose, html }: PreviewDialogProps) {
     extensions: getEditorExtensions(),
     content: html,
     editable: false,
-    immediatelyRender: true,
+    immediatelyRender: false,
   });
 
   return (

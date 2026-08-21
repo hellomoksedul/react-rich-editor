@@ -4,8 +4,9 @@ import {
   RotateCcw,
   Square,
   SquareDashed,
+  Loader2,
 } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactCrop, {
   type Crop,
   centerCrop,
@@ -44,10 +45,67 @@ export function ImageCropper({
   const imgRef = useRef<HTMLImageElement>(null);
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [originalAspect, setOriginalAspect] = useState<number>(1);
-  
-  // CORS fallback states
-  const [crossOriginAttribute, setCrossOriginAttribute] = useState<"anonymous" | undefined>("anonymous");
-  const [isTainted, setIsTainted] = useState(false);
+  const [effectiveSrc, setEffectiveSrc] = useState<string>(imageSrc);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+
+  // Pre-load external images into local Blob URLs to bypass any Canvas CORS restriction
+  useEffect(() => {
+    let active = true;
+    let createdBlobUrl: string | null = null;
+
+    async function loadAsBlob() {
+      if (!imageSrc) return;
+      if (imageSrc.startsWith("data:") || imageSrc.startsWith("blob:")) {
+        setEffectiveSrc(imageSrc);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Try 1: Fetch via same-origin media proxy
+        let res: Response | null = null;
+        try {
+          res = await fetch("/api/media-proxy?url=" + encodeURIComponent(imageSrc));
+        } catch {}
+
+        // Try 2: Direct fetch
+        if (!res || !res.ok) {
+          try {
+            res = await fetch(imageSrc, { mode: "cors" });
+          } catch {}
+        }
+
+        if (res && res.ok) {
+          const blob = await res.blob();
+          if (active) {
+            createdBlobUrl = URL.createObjectURL(blob);
+            setEffectiveSrc(createdBlobUrl);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Image cropper blob pre-fetch fallback:", e);
+      }
+
+      if (active) {
+        setEffectiveSrc(imageSrc);
+        setIsLoading(false);
+      }
+    }
+
+    if (isOpen) {
+      loadAsBlob();
+    }
+
+    return () => {
+      active = false;
+      if (createdBlobUrl) {
+        URL.revokeObjectURL(createdBlobUrl);
+      }
+    };
+  }, [imageSrc, isOpen]);
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
@@ -63,15 +121,6 @@ export function ImageCropper({
       height,
     );
     setCrop(crop);
-  };
-
-  const onImageError = () => {
-    // If the image failed to load with crossOrigin="anonymous", it's likely a CORS issue.
-    // We retry loading it without the crossOrigin attribute.
-    if (crossOriginAttribute === "anonymous") {
-      setCrossOriginAttribute(undefined);
-      setIsTainted(true);
-    }
   };
 
   const handleRatioClick = (value: number | string | undefined) => {
@@ -109,6 +158,7 @@ export function ImageCropper({
       return;
     }
 
+    setIsApplying(true);
     try {
       const canvas = document.createElement("canvas");
       const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
@@ -136,20 +186,48 @@ export function ImageCropper({
       onCropApply(base64Image);
       onClose();
     } catch (e) {
-      console.error(
-        "Failed to crop image. It might be a cross-origin issue.",
-        e,
-      );
-      alert("Cannot crop this image due to cross-origin restrictions.");
-    }
-  };
+      console.error("Failed to crop image on canvas:", e);
+      try {
+        // Fallback: fetch via proxy as blob if canvas was tainted
+        const res = await fetch("/api/media-proxy?url=" + encodeURIComponent(imageSrc));
+        if (res.ok) {
+          const blob = await res.blob();
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = URL.createObjectURL(blob);
+          await new Promise((resolve) => (img.onload = resolve));
 
-  // Convert decimal to ratio string for display
-  const getRatioDisplay = (val: number | string | undefined) => {
-    if (val === undefined) return "Freeform";
-    if (val === "original") return "Original";
-    const found = ASPECT_RATIOS.find((r) => r.value === val);
-    return found ? found.label : "Custom";
+          const canvas = document.createElement("canvas");
+          const scaleX = img.naturalWidth / imgRef.current.width;
+          const scaleY = img.naturalHeight / imgRef.current.height;
+          canvas.width = completedCrop.width * scaleX;
+          canvas.height = completedCrop.height * scaleY;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(
+              img,
+              completedCrop.x * scaleX,
+              completedCrop.y * scaleY,
+              completedCrop.width * scaleX,
+              completedCrop.height * scaleY,
+              0,
+              0,
+              completedCrop.width * scaleX,
+              completedCrop.height * scaleY,
+            );
+            const base64Image = canvas.toDataURL("image/jpeg", 0.95);
+            onCropApply(base64Image);
+            onClose();
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Fallback crop failed:", err);
+      }
+      alert("Could not crop image. Please check the image link.");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -168,30 +246,31 @@ export function ImageCropper({
                 opacity: 0.8,
               }}
             />
-            <div className="relative z-10 max-h-[60vh] flex items-center justify-center overflow-hidden">
-              <ReactCrop
-                crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspect}
-                className="max-h-full"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imgRef}
-                  src={imageSrc}
-                  alt="Crop preview"
-                  className="max-h-[60vh] object-contain"
-                  onLoad={onImageLoad}
-                  onError={onImageError}
-                  crossOrigin={crossOriginAttribute} // "anonymous" or undefined
-                />
-              </ReactCrop>
-            </div>
-            
-            {isTainted && (
-              <div className="absolute top-4 left-4 right-4 bg-destructive/90 text-destructive-foreground p-3 rounded-md text-sm shadow-md z-20">
-                <strong>Cross-Origin Restriction:</strong> This image is hosted on an external server that blocks direct manipulation. You can preview it, but cropping is disabled.
+
+            {isLoading ? (
+              <div className="relative z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="text-sm">Preparing image for editing...</span>
+              </div>
+            ) : (
+              <div className="relative z-10 max-h-[60vh] flex items-center justify-center overflow-hidden">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={aspect}
+                  className="max-h-full"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    ref={imgRef}
+                    src={effectiveSrc}
+                    alt="Crop preview"
+                    className="max-h-[60vh] object-contain"
+                    onLoad={onImageLoad}
+                    crossOrigin="anonymous"
+                  />
+                </ReactCrop>
               </div>
             )}
           </div>
@@ -215,14 +294,14 @@ export function ImageCropper({
                     <button
                       key={ratio.label}
                       onClick={() => handleRatioClick(ratio.value)}
-                      className={`flex flex-col items-center justify-center py-3 px-1 rounded-lg border transition-all overflow-hidden ${
+                      className={"flex flex-col items-center justify-center py-3 px-1 rounded-lg border transition-all overflow-hidden " + (
                         isSelected
                           ? "border-[#8b5cf6] bg-[#8b5cf6]/10 text-foreground shadow-[0_0_15px_rgba(139,92,246,0.2)]"
                           : "border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      }`}
+                      )}
                     >
                       <ratio.icon
-                        className={`w-5 h-5 mb-2 shrink-0 ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                        className={"w-5 h-5 mb-2 shrink-0 " + (isSelected ? "text-foreground" : "text-muted-foreground")}
                         strokeWidth={1.5}
                       />
                       <span className="text-[11px] font-medium leading-none whitespace-nowrap truncate w-full px-1 text-center">
@@ -240,6 +319,7 @@ export function ImageCropper({
                 size="sm"
                 onClick={handleReset}
                 className="text-muted-foreground hover:text-foreground px-2"
+                disabled={isLoading || isApplying}
               >
                 <RotateCcw className="w-4 h-4 mr-1.5" />
                 Reset
@@ -249,15 +329,20 @@ export function ImageCropper({
                   variant="outline"
                   className="w-20 border-border box-border"
                   onClick={onClose}
+                  disabled={isApplying}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="w-20 border border-transparent box-border"
                   onClick={handleApply}
-                  disabled={isTainted}
+                  disabled={isLoading || isApplying}
                 >
-                  Apply
+                  {isApplying ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Apply"
+                  )}
                 </Button>
               </div>
             </div>

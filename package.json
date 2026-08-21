@@ -1,6 +1,6 @@
 {
   "name": "@hellokit/react-rich-editor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A full-featured Tiptap-based rich text editor for React — toolbar, resizable images, YouTube embeds, tables, find & replace, source mode, font size, highlight, and more.",
   "keywords": [
     "react",
@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hellomoksedul/react-rich-editor.git"
+    "url": "git+https://github.com/hellomoksedul/react-rich-editor.git"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -29,12 +29,12 @@
     "./index.css": {
       "default": "./dist/index.css"
     },
-    "./src/editor-styles.css": "./src/editor-styles.css",
-    "./editor-styles.css": "./src/editor-styles.css"
+    "./styles.css": {
+      "default": "./dist/index.css"
+    }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "sideEffects": [
     "**/*.css"

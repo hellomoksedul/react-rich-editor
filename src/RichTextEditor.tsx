@@ -134,7 +134,7 @@ export function RichTextEditor({
     const prompt = `${instruction}\n\n${selectedHtml || selectedText}`;
     
     // Default to the first available provider
-    const provider = aiProviders?.[0] || DEFAULT_AI_PROVIDERS[0];
+    const provider = (aiProviders && aiProviders.length > 0 ? aiProviders[0] : null) || DEFAULT_AI_PROVIDERS[0];
 
     try {
       const originalSelection = editor.state.selection;
@@ -201,6 +201,14 @@ export function RichTextEditor({
     })();
   };
 
+  const isMountedRef = useRef(false);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const lastUpdatedValue = useRef(value);
 
   const editor = useEditor({
@@ -208,12 +216,12 @@ export function RichTextEditor({
       onImageCommand: () => setIsImageManagerOpen(true),
       onFileCommand: () => setIsFileManagerOpen(true),
       onSignatureCommand: () => setIsSignatureOpen(true),
-      onTocUpdate: (items) => setTimeout(() => setTocItems(items), 0),
+      onTocUpdate: (items) => { if (isMountedRef.current) setTocItems(items); },
       onGenerateImage: onGenerateImage,
       onImageUpload,
     }),
     content: value,
-    immediatelyRender: true,
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: `focus:outline-none ${isSimple ? "simple-mode" : ""}`,
@@ -251,12 +259,10 @@ export function RichTextEditor({
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
+      if (html === lastUpdatedValue.current) return;
       lastUpdatedValue.current = html;
-      // Defer the external onChange call to prevent "Cannot update a component while rendering a different component"
-      // or "component hasn't mounted yet" errors in React 19 when Tiptap normalizes content on first render.
-      setTimeout(() => {
-        onChange?.(html);
-      }, 0);
+      if (!isMountedRef.current) return;
+      onChange?.(html);
     },
   });
 
@@ -566,7 +572,7 @@ export function RichTextEditor({
           editor={editor}
           isOpen={isAskAiOpen}
           onClose={() => setIsAskAiOpen(false)}
-          providers={aiProviders ?? DEFAULT_AI_PROVIDERS}
+          providers={(aiProviders && aiProviders.length > 0) ? aiProviders : DEFAULT_AI_PROVIDERS}
           onAskAi={effectiveAskAi}
           credits={aiCredits}
           onTopUpCredits={onTopUpCredits}
@@ -591,7 +597,7 @@ export function RichTextEditor({
           onClose={() => setIsTranslateOpen(false)}
           onTranslate={async (language, selectedText, onStream) => {
              const prompt = `Translate the following text to ${language}. IMPORTANT: Output ONLY the translated text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly:\n\n${selectedText}`;
-             const provider = aiProviders?.[0] || DEFAULT_AI_PROVIDERS[0];
+             const provider = (aiProviders && aiProviders.length > 0 ? aiProviders[0] : null) || DEFAULT_AI_PROVIDERS[0];
              if (!effectiveAskAi) throw new Error("onAskAi not configured");
              return effectiveAskAi({ prompt, provider, onStream });
           }}

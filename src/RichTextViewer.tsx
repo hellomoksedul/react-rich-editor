@@ -15,7 +15,7 @@ export function RichTextViewer({ content, className = "" }: RichTextViewerProps)
     extensions: getEditorExtensions(),
     content: content,
     editable: false,
-    immediatelyRender: true,
+    immediatelyRender: false,
   });
 
   if (!editor) return null;
