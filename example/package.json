@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@hellokit/react-rich-editor": "workspace:*",
+    "@hellokit/react-rich-editor": "1.0.3",
     "lucide-react": "^1.21.0",
     "next": "16.3.1",
     "next-themes": "^0.4.6",

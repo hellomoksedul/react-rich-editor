@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { FaGithub } from "react-icons/fa";
 import { FiCheck, FiCopy } from "react-icons/fi";
+import { SiNpm } from "react-icons/si";
 
 export default function Hero() {
   const [copied, setCopied] = useState(false);
@@ -50,16 +52,18 @@ export default function Hero() {
         <a
           href="https://www.npmjs.com/package/@hellokit/react-rich-editor"
           target="_blank"
-          className="px-6 py-2.5 bg-foreground text-background font-medium rounded-lg hover:opacity-90 transition shadow-lg shadow-foreground/20"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-foreground text-background font-medium rounded-lg hover:opacity-90 transition shadow-lg shadow-foreground/20"
         >
+          <SiNpm className="w-5 h-5" />
           Get Started
         </a>
 
         <a
           href="https://github.com/hellomoksedul/react-rich-editor"
           target="_blank"
-          className="px-6 py-2.5 bg-background text-foreground border border-foreground/10 font-medium rounded-lg hover:bg-foreground/5 transition"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-background text-foreground border border-foreground/10 font-medium rounded-lg hover:bg-foreground/5 transition"
         >
+          <FaGithub className="w-4 h-4" />
           Source Code
         </a>
       </div>
