@@ -23,9 +23,10 @@ export function RichTextViewer({ content, className = "" }: RichTextViewerProps)
   return (
     <>
       <StyleInjector />
-      <div className={className}>
+      <div className={`hellokit-editor-scope ${className}`.trim()}>
         <EditorContent editor={editor} />
       </div>
     </>
   );
 }
+

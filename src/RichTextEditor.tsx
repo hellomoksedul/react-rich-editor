@@ -1,5 +1,4 @@
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Loader2 } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import { useEffect, useRef, useState } from "react";
@@ -22,12 +21,12 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { LayoutMenu } from "./LayoutMenu";
 import { resolveImageUpload, type MediaItem } from "./lib/image-upload";
 import { PreviewDialog } from "./PreviewDialog";
+import { SeoStats } from "./SeoStats";
 import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
 import { Toolbar } from "./Toolbar";
 import { TranslateDialog } from "./TranslateDialog";
-import { SeoStats } from "./SeoStats";
 
 export interface RichTextEditorProps {
   value?: string;
@@ -405,8 +404,38 @@ export function RichTextEditor({
 
   if (!editor) {
     return (
-      <div className="flex h-100 items-center justify-center border border-border rounded-md">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="hellokit-editor-scope">
+        <div className="hellokit-editor-container relative flex flex-col w-full border border-input rounded-md overflow-hidden bg-background animate-pulse">
+          {/* Skeleton toolbar */}
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 flex-wrap">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-6 w-6 rounded bg-muted" />
+            ))}
+            <div className="w-px h-5 bg-border mx-0.5" />
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-6 w-6 rounded bg-muted" />
+            ))}
+            <div className="w-px h-5 bg-border mx-0.5" />
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-6 w-6 rounded bg-muted" />
+            ))}
+            <div className="ml-auto flex items-center gap-1.5">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-6 w-6 rounded bg-muted" />
+              ))}
+            </div>
+          </div>
+          {/* Skeleton content */}
+          <div className="flex-1 p-4 space-y-3 min-h-[500px]">
+            <div className="h-4 bg-muted rounded w-3/4" />
+            <div className="h-4 bg-muted rounded w-full" />
+            <div className="h-4 bg-muted rounded w-5/6" />
+            <div className="h-4 bg-muted rounded w-2/3 mt-4" />
+            <div className="h-4 bg-muted rounded w-full" />
+            <div className="h-4 bg-muted rounded w-4/5" />
+            <div className="h-4 bg-muted rounded w-1/2 mt-4" />
+          </div>
+        </div>
       </div>
     );
   }
