@@ -15,6 +15,7 @@ import { ButtonBlockMenu } from "./ButtonBlockMenu";
 import { getEditorExtensions, type TocItem } from "./extensions";
 import { FileUploadDialog } from "./FileUploadDialog";
 import { FindReplace } from "./FindReplace";
+import { GenerateImageDialog } from "./GenerateImageDialog";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import { InlineBubbleMenu } from "./InlineBubbleMenu";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
@@ -24,9 +25,9 @@ import { PreviewDialog } from "./PreviewDialog";
 import { SignatureDialog } from "./SignatureDialog";
 import { StyleInjector } from "./StyleInjector";
 import { TableBubbleMenu } from "./TableBubbleMenu";
-import { GenerateImageDialog } from "./GenerateImageDialog";
-import { TranslateDialog } from "./TranslateDialog";
 import { Toolbar } from "./Toolbar";
+import { TranslateDialog } from "./TranslateDialog";
+import { SeoStats } from "./SeoStats";
 
 export interface RichTextEditorProps {
   value?: string;
@@ -75,6 +76,13 @@ export function RichTextEditor({
   aiRecentPromptsStorageKey,
   onGenerateImage,
 }: RichTextEditorProps) {
+  const effectiveAskAi: AskAiHandler | undefined =
+    onAskAi ??
+    (onAiGenerate
+      ? ({ prompt }: { prompt: string; provider: AiProviderConfig; onStream?: (chunk: string) => void }) =>
+          onAiGenerate(prompt)
+      : undefined);
+
   const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
   const [isSignatureOpen, setIsSignatureOpen] = useState(false);
@@ -89,6 +97,11 @@ export function RichTextEditor({
   const [selectedTextForSearch, setSelectedTextForSearch] = useState("");
   const [sourceCode, setSourceCode] = useState("");
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
+  const [selectedAiContext, setSelectedAiContext] = useState<{
+    text: string;
+    html: string;
+    range: { from: number; to: number };
+  } | null>(null);
 
   const handleInlineAiAction = async (action: string) => {
     if (action === "generate_image") {
@@ -102,17 +115,36 @@ export function RichTextEditor({
 
     if (!editor) return;
 
+    if (action === "ask_ai") {
+      const { from, to, empty } = editor.state.selection;
+      if (!empty) {
+        const selectedText = editor.state.doc.textBetween(from, to, " ");
+        const { DOMSerializer } = await import("@tiptap/pm/model");
+        const slice = editor.state.selection.content();
+        const serializer = DOMSerializer.fromSchema(editor.schema);
+        const frag = serializer.serializeFragment(slice.content);
+        const tmp = document.createElement("div");
+        tmp.appendChild(frag);
+        const selectedHtml = tmp.innerHTML;
+
+        setSelectedAiContext({
+          text: selectedText,
+          html: selectedHtml,
+          range: { from, to },
+        });
+      } else {
+        setSelectedAiContext(null);
+      }
+      setIsAskAiOpen(true);
+      return;
+    }
+
     const { from, to, empty } = editor.state.selection;
     if (empty) {
       alert("Please select some text first to use inline AI tools.");
       return;
     }
     const selectedText = editor.state.doc.textBetween(from, to, " ");
-
-    if (!effectiveAskAi) {
-      alert("Please configure the onAskAi prop to use inline AI tools.");
-      return;
-    }
 
     const { DOMSerializer } = await import("@tiptap/pm/model");
     const slice = editor.state.selection.content();
@@ -121,6 +153,11 @@ export function RichTextEditor({
     const tmp = document.createElement("div");
     tmp.appendChild(frag);
     const selectedHtml = tmp.innerHTML;
+
+    if (!effectiveAskAi) {
+      alert("Please configure the onAskAi prop to use inline AI tools.");
+      return;
+    }
 
     const actionPrompts: Record<string, string> = {
       fix_grammar: "Fix the grammar of the following text. IMPORTANT: Output ONLY the corrected text. Do NOT wrap the output in any HTML tags (like <p> or <h1>) unless the original text contained them. Preserve existing HTML perfectly.",
@@ -132,7 +169,7 @@ export function RichTextEditor({
 
     const instruction = actionPrompts[action] || "Improve this text. Preserve existing HTML tags and do not wrap in <p> unless the input contains it:";
     const prompt = `${instruction}\n\n${selectedHtml || selectedText}`;
-    
+
     // Default to the first available provider
     const provider = (aiProviders && aiProviders.length > 0 ? aiProviders[0] : null) || DEFAULT_AI_PROVIDERS[0];
 
@@ -174,8 +211,6 @@ export function RichTextEditor({
     }
   };
 
-  // Kept fresh via effect below so the drop/paste handlers below (captured
-  // once by useEditor) always call the latest onImageUpload prop.
   const onImageUploadRef = useRef(onImageUpload);
   useEffect(() => {
     onImageUploadRef.current = onImageUpload;
@@ -231,10 +266,6 @@ export function RichTextEditor({
         const allFiles = Array.from(event.dataTransfer?.files ?? []);
         const files = allFiles.filter((f) => f.type.startsWith("image/"));
         if (files.length === 0) {
-          // Non-image files (PDFs, docs, video, ...) aren't supported yet —
-          // block the browser's default handling (which otherwise tends to
-          // navigate the tab to the dropped file) instead of silently doing
-          // nothing that also lets the browser do something worse.
           if (allFiles.length > 0) event.preventDefault();
           return false;
         }
@@ -245,9 +276,6 @@ export function RichTextEditor({
         return true;
       },
       handlePaste: (view, event) => {
-        // Unlike drop, a plain paste can't navigate the tab away, so a
-        // non-image file here is left to ProseMirror's normal paste
-        // handling (returning false) rather than pre-empted.
         const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
           f.type.startsWith("image/"),
         );
@@ -277,12 +305,7 @@ export function RichTextEditor({
     }
   }, [value, editor]);
 
-  // Chrome/Edge (and some other Blink/WebKit browsers) draw their own native
-  // resize handles + selection outline around <img>/<table> elements inside
-  // a contenteditable region. That native box is what shows up as the extra
-  // outer border around images/tables — separate from (and larger than) our
-  // custom ResizableImage selection frame. Disabling it here so only our own
-  // handles are visible.
+  // Chrome/Edge native resize handles fix
   useEffect(() => {
     if (!editor) return;
     try {
@@ -293,12 +316,7 @@ export function RichTextEditor({
     }
   }, [editor]);
 
-  // Handle Ctrl+F (Find & Replace), Ctrl+K (Insert Link) and Ctrl+Shift+H
-  // (Horizontal Rule) keyboard shortcuts. These are exactly the shortcuts
-  // advertised in the KeyboardShortcuts modal — Ctrl+K and Ctrl+Shift+H used
-  // to be listed there but weren't wired up anywhere (neither the Link nor
-  // the HorizontalRule Tiptap extensions ship a default keybinding for them),
-  // so they silently did nothing.
+  // Keyboard shortcuts handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -371,17 +389,6 @@ export function RichTextEditor({
     editor?.chain().focus().setImage({ src: dataUrl }).run();
     setIsSignatureOpen(false);
   };
-
-  // `onAskAi` (multi-provider) supersedes the legacy single-callback
-  // `onAiGenerate` — if only the legacy prop is wired up, adapt it so the
-  // "Ask AI" dialog still works (ignoring whichever provider is picked,
-  // since there's only ever the one).
-  const effectiveAskAi =
-    onAskAi ??
-    (onAiGenerate
-      ? ({ prompt }: { prompt: string; provider: AiProviderConfig }) =>
-          onAiGenerate(prompt)
-      : undefined);
 
   const toggleSourceMode = (mode: boolean) => {
     if (mode) {
@@ -498,28 +505,32 @@ export function RichTextEditor({
           />
         )}
 
-        {/* Word Count Status Bar */}
+        {/* Word Count & SEO Status Bar */}
         {!isSimple && (
-          <div className="border-t border-border px-4 py-2 bg-muted/20 text-xs text-muted-foreground flex items-center gap-4">
-            <span>
-              Words:{" "}
-              <strong className="text-foreground">
-                {editor.storage.characterCount?.words() || 0}
-              </strong>
-            </span>
-            <span>
-              Characters:{" "}
-              <strong className="text-foreground">
-                {editor.storage.characterCount?.characters() || 0}
-              </strong>
-            </span>
-            <span>
-              Reading time:{" "}
-              <strong className="text-foreground">
-                {Math.ceil((editor.storage.characterCount?.words() || 0) / 200)}{" "}
-                min
-              </strong>
-            </span>
+          <div className="border-t border-border px-4 py-2 bg-muted/20 text-xs text-muted-foreground flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-4">
+              <span>
+                Words:{" "}
+                <strong className="text-foreground">
+                  {editor.storage.characterCount?.words() || 0}
+                </strong>
+              </span>
+              <span>
+                Characters:{" "}
+                <strong className="text-foreground">
+                  {editor.storage.characterCount?.characters() || 0}
+                </strong>
+              </span>
+              <span>
+                Reading time:{" "}
+                <strong className="text-foreground">
+                  {Math.ceil((editor.storage.characterCount?.words() || 0) / 200)}{" "}
+                  min
+                </strong>
+              </span>
+            </div>
+
+            <SeoStats editor={editor} />
           </div>
         )}
 
@@ -571,12 +582,17 @@ export function RichTextEditor({
         <AskAiDialog
           editor={editor}
           isOpen={isAskAiOpen}
-          onClose={() => setIsAskAiOpen(false)}
+          onClose={() => {
+            setIsAskAiOpen(false);
+            setSelectedAiContext(null);
+          }}
           providers={(aiProviders && aiProviders.length > 0) ? aiProviders : DEFAULT_AI_PROVIDERS}
           onAskAi={effectiveAskAi}
           credits={aiCredits}
           onTopUpCredits={onTopUpCredits}
           recentPromptsStorageKey={aiRecentPromptsStorageKey}
+          selectedContext={selectedAiContext}
+          onClearSelectedContext={() => setSelectedAiContext(null)}
         />
       )}
 

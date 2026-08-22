@@ -3,7 +3,60 @@
 import { RichTextEditor } from "@hellokit/react-rich-editor";
 import { useState } from "react";
 
-const DEFAULT_CONTENT = `<h1 id="68bc5a6a-0eb9-412e-bb47-d2a67ef9347b" data-toc-id="68bc5a6a-0eb9-412e-bb47-d2a67ef9347b">Hello, react-rich-editor!</h1><p>This editor supports <strong>multi-column</strong> responsive grid layouts natively. Try selecting this area and changing the layout from the floating menu.</p><p><img src="https://edge.moksedul.com/images/1787086446790-cover.webp" align="center" fullwidth="true" display="inline"></p><h3 id="44f3f811-dfe2-43ba-9d36-9eda4287a794" data-toc-id="44f3f811-dfe2-43ba-9d36-9eda4287a794">Powerful React Node Views</h3><p>You can insert fully interactive React components directly into the document, like this Recharts data visualization:</p><div data-chart-type="bar" data-title="Monthly Revenue" data-points="[{&quot;label&quot;:&quot;Jan&quot;,&quot;value&quot;:400,&quot;color&quot;:&quot;#b80a0a&quot;},{&quot;label&quot;:&quot;Feb&quot;,&quot;value&quot;:300,&quot;color&quot;:&quot;#008552&quot;},{&quot;label&quot;:&quot;Mar&quot;,&quot;value&quot;:550,&quot;color&quot;:&quot;#c77e00&quot;},{&quot;label&quot;:&quot;April&quot;,&quot;value&quot;:680,&quot;color&quot;:&quot;#ea580c&quot;},{&quot;label&quot;:&quot;May&quot;,&quot;value&quot;:1500,&quot;color&quot;:&quot;#7c3aed&quot;},{&quot;label&quot;:&quot;June&quot;,&quot;value&quot;:2500,&quot;color&quot;:&quot;#0891b2&quot;},{&quot;label&quot;:&quot;July&quot;,&quot;value&quot;:3000,&quot;color&quot;:&quot;#2563eb&quot;}]" data-chart-block=""></div><h3 id="a1a695cb-6be2-4433-8799-684627df9078" data-toc-id="a1a695cb-6be2-4433-8799-684627df9078">Slash Commands &amp; AI</h3><p>Type <code>/</code> on an empty line to open the slash menu. You can insert tables, blockquotes, signatures, or even ask AI to write content for you.</p><blockquote><p>The best rich text editor is the one that feels invisible until you need its power.</p></blockquote><table data-full-width="true" style="min-width: 323px;"><colgroup><col style="min-width: 25px;"><col style="width: 298px;"></colgroup><tbody><tr><th colspan="1" rowspan="1"><p>Feature</p></th><th colspan="1" rowspan="1" colwidth="298"><p>Support</p></th></tr><tr><td colspan="1" rowspan="1"><p>Tailwind CSS</p></td><td colspan="1" rowspan="1" colwidth="298"><p>Native?</p></td></tr><tr><td colspan="1" rowspan="1"><p>Next.js App Router</p></td><td colspan="1" rowspan="1" colwidth="298"><p>100% Compatible??</p></td></tr></tbody></table><p></p>`;
+const DEFAULT_CONTENT = `<p style="line-height: 1.625;"><strong>@hellokit/icon-picker</strong> is a highly polished, production-ready React Icon Picker for React and Next.js applications, built for SaaS products, website builders, and form builders.</p><h2 id="0b8fc839-f771-4af0-8d6b-721b2d874219" data-toc-id="0b8fc839-f771-4af0-8d6b-721b2d874219" style="line-height: 1.25;"><strong>Why Use This React Icon Picker</strong></h2><ul><li><p style="line-height: 1.625;"><strong>100,000+ Icons Supported:</strong> Seamlessly supports the entire <code>react-icons</code> library ecosystem.</p></li><li><p style="line-height: 1.625;"><strong>Zero UI Lag:</strong> Highly optimized lazy-loading and chunk-based rendering keep the picker fast even at scale.</p></li><li><p style="line-height: 1.625;"><strong>Fully Themed:</strong> Native light/dark mode support via CSS variables, with easy global or per-instance overrides.</p></li><li><p style="line-height: 1.625;"><strong>SVG Output Mode:</strong> Automatically converts selected icons to raw SVG strings to avoid bundling bloat in consuming projects.</p></li><li><p style="line-height: 1.625;"><strong>Multiple Variants:</strong> Built-in <code>card</code>, <code>button</code>, <code>ghost</code>, and <code>dashed</code> field styles.</p></li><li><p style="line-height: 1.625;"><strong>Tailwind Compatible:</strong> Styles can be overridden directly with standard Tailwind CSS classes.</p></li></ul><h2 id="5c7147ce-901d-45a1-a6f3-26593fa5f831" data-toc-id="5c7147ce-901d-45a1-a6f3-26593fa5f831" style="line-height: 1.25;"><strong>Installation</strong></h2><pre><code class="language-bash">npm install @hellokit/icon-picker
+# or
+pnpm add @hellokit/icon-picker
+# or
+yarn add @hellokit/icon-picker</code></pre><h2 id="b6f5c5a7-9528-419b-9f5b-8521c051f7bc" data-toc-id="b6f5c5a7-9528-419b-9f5b-8521c051f7bc" style="line-height: 1.25;"><strong>Quick Start</strong></h2><h3 id="6f9c6b1b-05b0-4666-b091-2608e46eb4a3" data-toc-id="6f9c6b1b-05b0-4666-b091-2608e46eb4a3" style="line-height: 1.3;"><strong>1. Import CSS (globally)</strong></h3><pre><code class="language-tsx">// app/layout.tsx
+import "@hellokit/icon-picker/dist/index.css";</code></pre><h3 id="e3647126-489a-45e2-80b2-c3964facbd88" data-toc-id="e3647126-489a-45e2-80b2-c3964facbd88" style="line-height: 1.3;"><strong>2. Wrap with Provider (optional but recommended)</strong></h3><pre><code class="language-tsx">import { IconProvider } from "@hellokit/icon-picker";
+
+export default function App({ children }) {
+  return (
+    &lt;IconProvider config={{ outputFormat: "svg" }}&gt;{children}&lt;/IconProvider&gt;
+  );
+}</code></pre><h3 id="a398ea47-aaca-496c-bf55-e458ab21ff52" data-toc-id="a398ea47-aaca-496c-bf55-e458ab21ff52" style="line-height: 1.3;"><strong>3. Use the picker field</strong></h3><pre><code class="language-tsx">import { IconPickerField, type IconValue } from "@hellokit/icon-picker";
+import { useState } from "react";
+
+export default function MyComponent() {
+  const [icon, setIcon] = useState&lt;IconValue | null&gt;(null);
+
+  return (
+    &lt;div className="p-10"&gt;
+      &lt;IconPickerField
+        value={icon}
+        onChange={setIcon}
+        variant="button"
+        size="md"
+        placeholder="Select an Icon"
+      /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre><h2 id="5c2d124c-23aa-45d6-9ca9-5da513ae128d" data-toc-id="5c2d124c-23aa-45d6-9ca9-5da513ae128d" style="line-height: 1.25;"><strong>Customizing Styles</strong></h2><pre><code class="language-tsx">&lt;IconPickerField
+  value={icon}
+  onChange={setIcon}
+  className="w-full hover:border-red-500 rounded-none shadow-xl"
+  theme={{
+    primary: "#eab308",
+    bg: "#18181b",
+    fg: "#ffffff",
+  }}
+/&gt;</code></pre><h3 id="aa456e3e-b5e9-49fc-8c53-b1f198651659" data-toc-id="aa456e3e-b5e9-49fc-8c53-b1f198651659" style="line-height: 1.3;"><strong>Global theme overrides</strong></h3><pre><code class="language-css">:root {
+  --ip-primary: #3b82f6;
+  --ip-primary-fg: #ffffff;
+  --ip-bg: #ffffff;
+  --ip-surface: #f4f4f5;
+  --ip-border: #e4e4e7;
+  --ip-fg: #09090b;
+  --ip-fg-muted: #71717a;
+}
+
+.dark {
+  --ip-bg: #09090b;
+  --ip-surface: #18181b;
+  --ip-border: #27272a;
+  --ip-fg: #ffffff;
+  --ip-fg-muted: #a1a1aa;
+}</code></pre><p></p>`;
 
 export default function EditorPreview() {
   const [content, setContent] = useState(DEFAULT_CONTENT);

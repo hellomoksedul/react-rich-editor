@@ -1,6 +1,6 @@
 {
   "name": "@hellokit/react-rich-editor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A full-featured Tiptap-based rich text editor for React — toolbar, resizable images, YouTube embeds, tables, find & replace, source mode, font size, highlight, and more.",
   "keywords": [
     "react",
@@ -61,6 +61,7 @@
     "@tiptap/core": "^3.27.1",
     "@tiptap/extension-character-count": "^3.27.1",
     "@tiptap/extension-code-block": "^3.27.1",
+    "@tiptap/extension-code-block-lowlight": "^3.30.2",
     "@tiptap/extension-color": "^3.27.1",
     "@tiptap/extension-highlight": "^3.27.1",
     "@tiptap/extension-image": "^3.27.1",
@@ -89,6 +90,7 @@
     "clsx": "^2.1.1",
     "emoji-picker-react": "^4.19.1",
     "katex": "^0.16.11",
+    "lowlight": "^3.3.0",
     "lucide-react": "^1.21.0",
     "prismjs": "^1.30.0",
     "react-icons": "^5.7.0",

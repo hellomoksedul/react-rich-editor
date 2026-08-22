@@ -1,15 +1,15 @@
 "use client";
 
-import CodeBlock from "@tiptap/extension-code-block";
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import {
   NodeViewContent,
   NodeViewWrapper,
   ReactNodeViewRenderer,
   type NodeViewProps,
 } from "@tiptap/react";
+import { all, createLowlight } from "lowlight";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
-import { Button } from "./ui/button";
 import {
   Select,
   SelectContent,
@@ -17,6 +17,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+
+export const lowlight = createLowlight(all);
+
+const LANGUAGES = [
+  { label: "TSX", value: "tsx" },
+  { label: "TypeScript", value: "typescript" },
+  { label: "JSX", value: "jsx" },
+  { label: "JavaScript", value: "javascript" },
+  { label: "HTML", value: "html" },
+  { label: "CSS", value: "css" },
+  { label: "JSON", value: "json" },
+  { label: "Python", value: "python" },
+  { label: "Bash", value: "bash" },
+  { label: "SQL", value: "sql" },
+  { label: "Markdown", value: "markdown" },
+  { label: "YAML", value: "yaml" },
+  { label: "Rust", value: "rust" },
+  { label: "Go", value: "go" },
+  { label: "Java", value: "java" },
+  { label: "C++", value: "cpp" },
+  { label: "C#", value: "csharp" },
+  { label: "PHP", value: "php" },
+  { label: "Plain Text", value: "text" },
+];
 
 function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
   const [copied, setCopied] = useState(false);
@@ -28,73 +52,76 @@ function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
   };
 
   const lineCount = node.textContent.split("\n").length || 1;
+  const currentLang = node.attrs.language || "tsx";
 
   return (
-    <NodeViewWrapper className="relative group my-6 rounded-xl bg-[#0d0d0d] text-[#e5e5e5] font-mono text-sm shadow-sm border border-[#2a2a2a] overflow-hidden">
+    <NodeViewWrapper className="hellokit-code-block group">
       {/* Absolute positioned actions (top right) */}
-      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10 select-none">
         {editor.isEditable ? (
           <div contentEditable={false}>
             <Select
-              value={node.attrs.language || "text"}
+              value={currentLang}
               onValueChange={(value) => updateAttributes({ language: value })}
             >
-              <SelectTrigger className="h-7 w-25] bg-transparent text-[11px] font-medium text-muted-foreground hover:text-[#d4d4d4] outline-none cursor-pointer transition-colors px-2 py-0 rounded-md border border-[#2a2a2a] hover:bg-white/5 focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="hellokit-code-btn h-7 min-w-18.5 text-[11px] font-medium outline-none cursor-pointer px-2.5 py-0 rounded-lg focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="Language" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">text</SelectItem>
-                <SelectItem value="javascript">javascript</SelectItem>
-                <SelectItem value="typescript">typescript</SelectItem>
-                <SelectItem value="html">html</SelectItem>
-                <SelectItem value="css">css</SelectItem>
-                <SelectItem value="python">python</SelectItem>
-                <SelectItem value="json">json</SelectItem>
-                <SelectItem value="bash">bash</SelectItem>
+              <SelectContent className="max-h-56">
+                {LANGUAGES.map((lang) => (
+                  <SelectItem
+                    key={lang.value}
+                    value={lang.value}
+                    className="text-xs"
+                  >
+                    {lang.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         ) : (
-          <span className="text-[11px] font-medium text-muted-foreground bg-transparent px-2 py-1.5 rounded-md border border-[#2a2a2a] select-none">
-            {node.attrs.language || "text"}
+          <span className="hellokit-code-btn text-[11px] font-medium px-2.5 py-1 rounded-lg select-none">
+            {LANGUAGES.find((l) => l.value === currentLang)?.label ||
+              currentLang}
           </span>
         )}
 
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 bg-transparent text-muted-foreground hover:text-white hover:bg-white/5 border border-[#2a2a2a] rounded-md"
+          className="hellokit-code-btn h-7 w-7 flex items-center justify-center rounded-lg cursor-pointer"
           onClick={handleCopy}
           contentEditable={false}
+          title="Copy code"
+          aria-label="Copy code"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-green-500" />
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Code Content with Line Numbers */}
-      <div className="relative flex">
+      <div className="relative flex min-w-0 w-full">
         {/* Line Numbers */}
         <div
-          className="flex flex-col select-none text-right pl-5 pr-4 py-5 text-[#666666] text-[13px] font-mono bg-transparent"
+          className="hellokit-code-line-numbers shrink-0"
           contentEditable={false}
         >
           {Array.from({ length: lineCount }).map((_, i) => (
-            <div key={i} className="leading-[1.6] min-h-[1.3rem]">
+            <div key={i} className="leading-6 min-h-6">
               {i + 1}
             </div>
           ))}
         </div>
 
         {/* Actual Code */}
-        <pre className="py-5 pr-28 pl-0 overflow-x-auto m-0 bg-transparent! flex-1 text-[13px] leading-[1.6] whitespace-pre">
+        <pre className="m-0 min-w-0 flex-1 overflow-x-auto whitespace-pre leading-6">
           <NodeViewContent
             as={"code" as any}
-            className="block outline-none min-h-[1.3rem]"
+            className="block outline-none min-h-6 leading-6"
           />
         </pre>
       </div>
@@ -102,8 +129,11 @@ function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
   );
 }
 
-export const CustomCodeBlock = CodeBlock.extend({
+export const CustomCodeBlock = CodeBlockLowlight.extend({
   addNodeView() {
     return ReactNodeViewRenderer(CodeBlockView);
   },
+}).configure({
+  lowlight,
+  defaultLanguage: "tsx",
 });

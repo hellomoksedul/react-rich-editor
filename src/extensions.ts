@@ -35,6 +35,7 @@ import { FontSize } from "./FontSizeExtension";
 import { FontWeight } from "./FontWeightExtension";
 import { LineHeight } from "./LineHeightExtension";
 import { FontFamily } from "./FontFamilyExtension";
+import { IconExtension } from "./IconExtension";
 import { LayoutGroup, LayoutItem } from "./LayoutExtension";
 import { ResizableImage } from "./ResizableImage";
 import { ResizableYoutube } from "./ResizableYoutube";
@@ -313,6 +314,7 @@ export const getEditorExtensions = (
   ChartBlock,
   LayoutGroup,
   LayoutItem,
+  IconExtension,
   Equation,
   FileAttachment,
   SlashCommand.configure({

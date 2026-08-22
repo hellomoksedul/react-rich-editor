@@ -46,4 +46,5 @@ export type { ChartDataPoint, ChartType } from "./ChartBlockExtension";
 export { EditChartDialog } from "./EditChartDialog";
 export { LayoutItem, LayoutGroup } from "./LayoutExtension";
 export { LayoutMenu } from "./LayoutMenu";
+export { IconExtension } from "./IconExtension";
 

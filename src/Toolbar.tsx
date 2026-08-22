@@ -1,7 +1,6 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
-import EmojiPicker, { Theme } from "emoji-picker-react";
 import {
   AlignCenter,
   AlignJustify,
@@ -38,7 +37,6 @@ import {
   Link,
   List,
   ListOrdered,
-  ListTree,
   MessageSquarePlus,
   Minus,
   MoreHorizontal,
@@ -55,8 +53,8 @@ import {
   Redo,
   RemoveFormatting,
   Search,
+  Shapes,
   Sigma,
-  Smile,
   Strikethrough,
   Subscript,
   Superscript,
@@ -68,7 +66,8 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FaYoutube } from "react-icons/fa";
+import { FiYoutube } from "react-icons/fi";
+import { EmojiPickerPopover } from "./EmojiPickerPopover";
 
 import { AIIcon } from "./AIIcon";
 import { DEFAULT_CHART_POINTS } from "./ChartBlockExtension";
@@ -430,47 +429,49 @@ export function Toolbar({
             >
               <DropdownMenuItem
                 onClick={() => handleHeadingChange("paragraph")}
-                className={getCurrentHeading() === "paragraph" ? "bg-accent" : ""}
+                className={
+                  getCurrentHeading() === "paragraph" ? "bg-accent" : ""
+                }
               >
                 <Pilcrow className="mr-2 h-4 w-4" />
                 <span>Normal</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h1")}
                 className={getCurrentHeading() === "h1" ? "bg-accent" : ""}
               >
                 <Heading1 className="mr-2 h-4 w-4" />
                 <span>Heading 1</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h2")}
                 className={getCurrentHeading() === "h2" ? "bg-accent" : ""}
               >
                 <Heading2 className="mr-2 h-4 w-4" />
                 <span>Heading 2</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h3")}
                 className={getCurrentHeading() === "h3" ? "bg-accent" : ""}
               >
                 <Heading3 className="mr-2 h-4 w-4" />
                 <span>Heading 3</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h4")}
                 className={getCurrentHeading() === "h4" ? "bg-accent" : ""}
               >
                 <Heading4 className="mr-2 h-4 w-4" />
                 <span>Heading 4</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h5")}
                 className={getCurrentHeading() === "h5" ? "bg-accent" : ""}
               >
                 <Heading5 className="mr-2 h-4 w-4" />
                 <span>Heading 5</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleHeadingChange("h6")}
                 className={getCurrentHeading() === "h6" ? "bg-accent" : ""}
               >
@@ -935,7 +936,14 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("left").run()
                 }
-                className={editor.isActive({ textAlign: "left" }) || (!editor.isActive({ textAlign: "center" }) && !editor.isActive({ textAlign: "right" }) && !editor.isActive({ textAlign: "justify" })) ? "bg-accent" : ""}
+                className={
+                  editor.isActive({ textAlign: "left" }) ||
+                  (!editor.isActive({ textAlign: "center" }) &&
+                    !editor.isActive({ textAlign: "right" }) &&
+                    !editor.isActive({ textAlign: "justify" }))
+                    ? "bg-accent"
+                    : ""
+                }
               >
                 <AlignLeft className="mr-2 h-4 w-4" />
                 <span>Left</span>
@@ -944,7 +952,9 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("center").run()
                 }
-                className={editor.isActive({ textAlign: "center" }) ? "bg-accent" : ""}
+                className={
+                  editor.isActive({ textAlign: "center" }) ? "bg-accent" : ""
+                }
               >
                 <AlignCenter className="mr-2 h-4 w-4" />
                 <span>Center</span>
@@ -953,7 +963,9 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("right").run()
                 }
-                className={editor.isActive({ textAlign: "right" }) ? "bg-accent" : ""}
+                className={
+                  editor.isActive({ textAlign: "right" }) ? "bg-accent" : ""
+                }
               >
                 <AlignRight className="mr-2 h-4 w-4" />
                 <span>Right</span>
@@ -962,7 +974,9 @@ export function Toolbar({
                 onClick={() =>
                   editor.chain().focus().setTextAlign("justify").run()
                 }
-                className={editor.isActive({ textAlign: "justify" }) ? "bg-accent" : ""}
+                className={
+                  editor.isActive({ textAlign: "justify" }) ? "bg-accent" : ""
+                }
               >
                 <AlignJustify className="mr-2 h-4 w-4" />
                 <span>Justify Align</span>
@@ -1081,7 +1095,17 @@ export function Toolbar({
           <>
             <Popover
               open={isLinkPopoverOpen}
-              onOpenChange={setIsLinkPopoverOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  const attrs = editor.getAttributes("link");
+                  setLinkUrl(attrs.href || "");
+                  setLinkTitle(attrs.title || "");
+                } else {
+                  setLinkUrl("");
+                  setLinkTitle("");
+                }
+                setIsLinkPopoverOpen(open);
+              }}
             >
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
@@ -1139,8 +1163,6 @@ export function Toolbar({
                           .extendMarkRange("link")
                           .setLink({ href: linkUrl, title: linkTitle } as any)
                           .run();
-                        setLinkUrl("");
-                        setLinkTitle("");
                         setIsLinkPopoverOpen(false);
                       }
                     }}
@@ -1163,58 +1185,32 @@ export function Toolbar({
               </PopoverContent>
             </Popover>
 
-            <Popover
-              open={isEmojiPickerOpen}
-              onOpenChange={setIsEmojiPickerOpen}
-            >
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      onMouseDown={(e) => e.preventDefault()}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "h-8 w-8 p-0",
-                        isEmojiPickerOpen && "bg-accent text-accent-foreground",
-                      )}
-                      aria-label="Insert Emoji"
-                    >
-                      <Smile className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="px-2 py-1.5 text-xs">
-                  Insert Emoji
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent
-                onCloseAutoFocus={(e) => e.preventDefault()}
-                className="w-auto p-0 border-none bg-transparent shadow-none [&_.epr-emoji-category-label]:text-xs [&_.epr-emoji-category-label]:font-medium"
-                align="center"
+            <Tooltip delayDuration={300}>
+              <EmojiPickerPopover
+                editor={editor}
+                isOpen={isEmojiPickerOpen}
+                onOpenChange={setIsEmojiPickerOpen}
               >
-                <EmojiPicker
-                  theme={Theme.DARK}
-                  onEmojiClick={(emojiData) => {
-                    editor.chain().focus().insertContent(emojiData.emoji).run();
-                    setIsEmojiPickerOpen(false);
-                  }}
-                  style={
-                    {
-                      "--epr-bg-color": "var(--popover)",
-                      "--epr-category-label-bg-color": "var(--popover)",
-                      "--epr-picker-border-color": "var(--border)",
-                      "--epr-search-border-color": "var(--border)",
-                      "--epr-search-input-bg-color": "transparent",
-                      "--epr-highlight-color": "var(--ring)",
-                      "--epr-text-color": "var(--foreground)",
-                      "--epr-search-input-text-color": "var(--foreground)",
-                    } as React.CSSProperties
-                  }
-                />
-              </PopoverContent>
-            </Popover>
+                <TooltipTrigger asChild>
+                  <Button
+                    onMouseDown={(e) => e.preventDefault()}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 w-8 p-0",
+                      isEmojiPickerOpen && "bg-accent text-accent-foreground",
+                    )}
+                    aria-label="Icons & Emojis"
+                  >
+                    <Shapes className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+              </EmojiPickerPopover>
+              <TooltipContent side="bottom" className="px-2 py-1.5 text-xs">
+                Icons & Emojis
+              </TooltipContent>
+            </Tooltip>
 
             <ToolbarButton
               onClick={() =>
@@ -1247,7 +1243,7 @@ export function Toolbar({
                       className="h-8 w-8 p-0"
                       aria-label="Add YouTube Video"
                     >
-                      <FaYoutube className="h-4 w-4" />
+                      <FiYoutube className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
                 </TooltipTrigger>
@@ -1294,11 +1290,11 @@ export function Toolbar({
                       onMouseDown={(e) => e.preventDefault()}
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-auto px-2"
+                      className="h-8 px-1.5 gap-0.5"
                       aria-label="Insert Items"
                     >
                       <Plus className="h-4 w-4" />
-                      <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+                      <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
@@ -1323,7 +1319,9 @@ export function Toolbar({
                       onClick={() =>
                         editor.chain().focus().toggleBlockquote().run()
                       }
-                      className={editor.isActive("blockquote") ? "bg-accent" : ""}
+                      className={
+                        editor.isActive("blockquote") ? "bg-accent" : ""
+                      }
                     >
                       <Quote className="mr-2 h-4 w-4" />
                       <span>Blockquote</span>
@@ -1332,7 +1330,9 @@ export function Toolbar({
                       onClick={() =>
                         editor.chain().focus().toggleCodeBlock().run()
                       }
-                      className={editor.isActive("codeBlock") ? "bg-accent" : ""}
+                      className={
+                        editor.isActive("codeBlock") ? "bg-accent" : ""
+                      }
                     >
                       <FileCode className="mr-2 h-4 w-4" />
                       <span>Code Block</span>
@@ -1440,130 +1440,110 @@ export function Toolbar({
 
         {/* 
           --------------------------------------------------------
-          6. TOOLS & UTILITIES
+          6. VIEW & TOOLS DROPDOWN + AI
           --------------------------------------------------------
         */}
         {!isSimple && (
           <>
-            {/* Table of Contents */}
-            <Popover>
+            {/* View & Tools Dropdown */}
+            <DropdownMenu>
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      onMouseDown={(e) => e.preventDefault()}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      aria-label="Table of Contents"
-                    >
-                      <ListTree className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="px-2 py-1.5 text-xs">
-                  Table of Contents
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent
-                onCloseAutoFocus={(e) => e.preventDefault()}
-                className="w-64 p-2"
-                align="start"
-              >
-                {tocItems.length === 0 ? (
-                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-                    No headings yet — add a Heading to build a table of
-                    contents.
-                  </p>
-                ) : (
-                  <div className="max-h-72 space-y-0.5 overflow-y-auto">
-                    {tocItems.map((item) => (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => onTocNavigate(item)}
-                        style={{
-                          paddingLeft: `${(item.originalLevel - 1) * 12 + 8}px`,
-                        }}
-                        className={cn(
-                          "block w-full truncate rounded-sm py-1.5 pr-2 text-left text-sm hover:bg-accent hover:text-accent-foreground",
-                          item.isActive
-                            ? "bg-accent/60 font-medium text-accent-foreground"
-                            : "text-muted-foreground",
-                        )}
-                        title={item.textContent}
-                      >
-                        {item.textContent || "Untitled heading"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-
-            {/* Find & Replace */}
-            <ToolbarButton
-              onClick={() => setIsFindReplaceOpen(true)}
-              title="Find & Replace (Ctrl+F)"
-            >
-              <Search className="h-4 w-4" />
-            </ToolbarButton>
-
-            {/* Keyboard Shortcuts */}
-            <ToolbarButton
-              onClick={() => setIsShortcutsOpen(true)}
-              title="Keyboard Shortcuts"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </ToolbarButton>
-
-            <div className="w-px h-6 bg-border mx-1" />
-
-            <ToolbarButton
-              onClick={() => setIsPreviewOpen(true)}
-              title="Preview"
-            >
-              <Eye className="h-4 w-4" />
-            </ToolbarButton>
-
-            <ToolbarButton
-              onClick={() => setIsSourceMode(!isSourceMode)}
-              active={isSourceMode}
-              title="Source Code"
-            >
-              <CodeXml className="h-4 w-4" />
-            </ToolbarButton>
-
-            <div className="w-px h-6 bg-border mx-1" />
-            <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       onMouseDown={(e) => e.preventDefault()}
                       variant="ghost"
                       size="sm"
-                      className={cn(
-                        "h-8 px-2 gap-1 ml-1 text-xs font-medium",
-                        isAskAiOpen && "bg-accent text-accent-foreground",
-                      )}
-                      aria-label="AI Actions"
+                      className="h-8 px-1.5 gap-0.5"
+                      aria-label="View and tools"
                     >
-                      <AIIcon className="h-3 w-3" />
-                      <span>AI</span>
+                      <Eye className="h-4 w-4" />
                       <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="px-2 py-1.5 text-xs">
+                  View & Tools
+                </TooltipContent>
+              </Tooltip>
               <DropdownMenuContent
                 onCloseAutoFocus={(e) => e.preventDefault()}
-                align="start"
+                align="end"
+                className="w-48 p-1.5"
+              >
+                <DropdownMenuItem
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  <span>Preview</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setIsSourceMode(!isSourceMode)}
+                  className="cursor-pointer"
+                >
+                  <CodeXml className="mr-2 h-4 w-4" />
+                  <span>
+                    {isSourceMode ? "Rich Text Editor" : "Source Code"}
+                  </span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={() => setIsFindReplaceOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>Find & Replace</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setIsShortcutsOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>Keyboard Shortcuts</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* AI Actions Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-8 px-2 gap-1 ml-0.5 text-xs font-medium",
+                    isAskAiOpen && "bg-accent text-accent-foreground",
+                  )}
+                  aria-label="AI Actions"
+                >
+                  <AIIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span>AI</span>
+                  <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                align="end"
                 className="w-56 p-1.5"
               >
                 <DropdownMenuItem
-                  onClick={() => setIsAskAiOpen(!isAskAiOpen)}
+                  onClick={() => {
+                    if (onInlineAiAction) {
+                      onInlineAiAction("ask_ai");
+                    } else {
+                      setIsAskAiOpen(!isAskAiOpen);
+                    }
+                  }}
                   className="cursor-pointer font-medium mb-1"
                 >
                   <MessageSquarePlus className="mr-2 h-4 w-4" />
-                  <span>AI Chat</span>
+                  <span>Ask AI</span>
                 </DropdownMenuItem>
 
                 <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">

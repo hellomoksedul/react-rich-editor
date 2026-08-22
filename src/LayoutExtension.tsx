@@ -61,15 +61,21 @@ function LayoutGroupView({
   return (
     <NodeViewWrapper
       data-layout-group-wrapper=""
-      className={`my-4 border border-dashed p-1.5 rounded-xl relative transition-colors ${
-        isFocused
-          ? "border-[#b57d37]/60"
-          : "border-transparent hover:border-[#b57d37]/30"
-      }`}
+      className={cn(
+        "my-4 relative transition-colors",
+        editor.isEditable
+          ? cn(
+              "border border-dashed p-1.5 rounded-2xl",
+              isFocused
+                ? "border-primary/50"
+                : "border-border/60 hover:border-border",
+            )
+          : "border-none p-0",
+      )}
     >
       <NodeViewContent
         as="div"
-        className="hellokit-layout-content grid w-full gap-4"
+        className="hellokit-layout-content grid w-full gap-3 md:gap-4"
         style={
           {
             "--layout-template": templateStr,
@@ -132,7 +138,9 @@ function LayoutItemView({
     <NodeViewWrapper
       data-layout-item-wrapper=""
       className={cn(
-        "hellokit-layout-item relative rounded-xl border border-transparent bg-black p-3 shadow-sm min-w-0 flex flex-col h-full w-full transition-colors hover:border-white/10",
+        "hellokit-layout-item relative rounded-xl border border-border/60 bg-muted/30 dark:bg-zinc-900/40 px-5 py-4 sm:px-6 sm:py-4.5 min-w-0 flex flex-col h-full w-full transition-colors",
+        editor.isEditable &&
+          "hover:border-border hover:bg-muted/50 dark:hover:bg-zinc-900/70",
       )}
       style={
         {
@@ -143,15 +151,15 @@ function LayoutItemView({
     >
       {editor.isEditable && (
         <div
-          className="mb-3 flex items-center justify-between"
+          className="mb-1.5 flex items-center justify-between"
           contentEditable={false}
         >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#e6c196] select-none">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 select-none">
             COL {index + 1}
           </span>
           <button
             type="button"
-            className="flex items-center gap-1 rounded-full bg-[#fde9d2] px-2.5 py-0.5 text-[10px] font-semibold text-[#b57d37] transition-colors hover:bg-[#fbdcb5]"
+            className="flex items-center gap-1 rounded-md bg-muted hover:bg-accent text-muted-foreground hover:text-foreground border border-border/60 px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer"
             onClick={() => {
               if (typeof getPos === "function") {
                 const pos = getPos();
@@ -172,7 +180,7 @@ function LayoutItemView({
           </button>
         </div>
       )}
-      <NodeViewContent className="flex-1" />
+      <NodeViewContent className="flex-1 min-w-0" />
     </NodeViewWrapper>
   );
 }

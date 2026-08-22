@@ -102,6 +102,13 @@ export interface AskAiDialogProps {
   onTopUpCredits?: () => void;
   /** localStorage key used to remember recent prompts on this device. */
   recentPromptsStorageKey?: string;
+  /** Optional selected content to transform or rewrite with a prompt */
+  selectedContext?: {
+    text: string;
+    html: string;
+    range: { from: number; to: number };
+  } | null;
+  onClearSelectedContext?: () => void;
 }
 
 export function AskAiDialog({
@@ -113,6 +120,8 @@ export function AskAiDialog({
   credits,
   onTopUpCredits,
   recentPromptsStorageKey = "hellokit-ai-recent-prompts",
+  selectedContext,
+  onClearSelectedContext,
 }: AskAiDialogProps) {
   const [prompt, setPrompt] = useState("");
   const [providerId, setProviderId] = useState(providers[0]?.id);
@@ -141,6 +150,7 @@ export function AskAiDialog({
     setError("");
     setIsLoading(false);
     setShowAllRecent(false);
+    onClearSelectedContext?.();
   };
 
   const handleClose = () => {
@@ -167,8 +177,12 @@ export function AskAiDialog({
 
     try {
       let fullContent = "";
+      const effectivePrompt = selectedContext?.text
+        ? `Instructions: ${prompt.trim()}\n\nContent to modify:\n${selectedContext.html || selectedContext.text}\n\nIMPORTANT: Output ONLY the updated content to directly replace the selection. Preserve existing HTML formatting where appropriate and do NOT wrap output in markdown fences.`
+        : prompt.trim();
+
       const content = await onAskAi({
-        prompt: prompt.trim(),
+        prompt: effectivePrompt,
         provider: selectedProvider,
         onStream: (chunk) => {
            fullContent += chunk;
@@ -206,7 +220,16 @@ export function AskAiDialog({
 
   const handleShowInEditor = () => {
     if (!editor || !generatedHtml) return;
-    editor.chain().focus().insertContent(generatedHtml).run();
+    if (selectedContext?.range) {
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(selectedContext.range)
+        .insertContent(generatedHtml)
+        .run();
+    } else {
+      editor.chain().focus().insertContent(generatedHtml).run();
+    }
     handleClose();
   };
 
@@ -224,17 +247,46 @@ export function AskAiDialog({
       open={isOpen}
       onOpenChange={(open) => !open && handleClose()}
       title="Ask AI"
-      description="Quick assistance for improving, translating, or explaining your content."
+      description={
+        selectedContext
+          ? "Ask AI to rewrite, refine, or update the selected content."
+          : "Quick assistance for improving, translating, or generating content."
+      }
       className="w-[95vw] max-w-2xl"
     >
       <div className="flex min-w-0 flex-col gap-3">
+        {selectedContext && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="font-semibold text-foreground shrink-0">Selected:</span>
+              <span className="text-muted-foreground truncate italic">
+                "{selectedContext.text.slice(0, 80)}{selectedContext.text.length > 80 ? "..." : ""}"
+              </span>
+            </div>
+            {onClearSelectedContext && (
+              <button
+                type="button"
+                onClick={onClearSelectedContext}
+                className="text-[11px] text-muted-foreground hover:text-foreground font-medium shrink-0"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         <div>
           <Textarea
             ref={textareaRef}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g., Write a paragraph about..., Generate an image of..."
-            rows={8}
+            placeholder={
+              selectedContext
+                ? "e.g., Rewrite in a professional tone, Make it more concise, Convert into bullet points, Translate..."
+                : "e.g., Write a paragraph about..., Generate an outline for..."
+            }
+            rows={selectedContext ? 5 : 7}
             className="resize-none"
             autoFocus
           />
@@ -293,7 +345,7 @@ export function AskAiDialog({
                 className="h-auto p-0 text-primary hover:bg-transparent hover:underline"
                 onClick={handleShowInEditor}
               >
-                Insert into Editor
+                {selectedContext ? "Replace Selection" : "Insert into Editor"}
               </Button>
             </label>
             <div

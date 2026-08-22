@@ -1,14 +1,18 @@
 /*! Auto-synced from src/editor-styles.css by scripts/build-css.js - DO NOT EDIT MANUALLY */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap');
+
 /* TipTap Editor Custom Styles */
 
 :root {
   --rich-editor-font:
-    "DM Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    var(--font-sans, var(--font-geist-sans, "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif));
+  --rich-editor-code-font:
+    var(--font-geist-mono, var(--font-mono, "Geist Mono", "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace));
 }
 
 .hellokit-editor-scope {
   font-family: var(--rich-editor-font);
+  font-size: 16px;
 }
 
 /* Custom Scrollbar */
@@ -42,6 +46,31 @@
 .hellokit-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* Tippy Bubble Menu Resets */
+[data-tippy-root] {
+  max-width: none !important;
+}
+.tippy-box {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+.tippy-content {
+  padding: 0 !important;
+  max-width: none !important;
+}
+.hellokit-inline-bubble-menu,
+.hellokit-bubble-menu-root {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  max-width: none !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  display: flex !important;
 }
 
 .ProseMirror {
@@ -119,28 +148,78 @@
 .hellokit-layout-item {
   min-width: 0;
   border-radius: 0.75rem;
-  transition: border-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .hellokit-layout-item:hover,
 .hellokit-layout-item:focus-within {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--border, rgba(0, 0, 0, 0.2));
 }
 
-.hellokit-layout-item > *:last-child {
-  margin-bottom: 0;
+.dark .hellokit-layout-item:hover,
+.dark .hellokit-layout-item:focus-within {
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Layout content grid fix */
-.hellokit-layout-content {
+.hellokit-layout-item .flex-1 > *:first-child,
+.hellokit-layout-item > *:first-child,
+.hellokit-layout-item h1:first-child,
+.hellokit-layout-item h2:first-child,
+.hellokit-layout-item h3:first-child,
+.hellokit-layout-item h4:first-child,
+.hellokit-layout-item p:first-child {
+  margin-top: 0 !important;
+}
+
+.hellokit-layout-item .flex-1 > *:last-child,
+.hellokit-layout-item > *:last-child,
+.hellokit-layout-item p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Layout content container query support for perfect responsiveness */
+[data-layout-group-wrapper],
+.hellokit-editor-scope,
+.hellokit-preview-frame,
+[data-layout-group] {
+  container-type: inline-size;
+}
+
+.hellokit-layout-content,
+[data-layout-group] {
   width: 100%;
-  grid-template-columns: 1fr; /* Mobile fallback: single column */
+  display: grid;
+  grid-template-columns: var(--layout-template, repeat(2, minmax(0, 1fr)));
+  gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .hellokit-layout-content {
-    grid-template-columns: var(--layout-template, repeat(2, minmax(0, 1fr)));
+@container (max-width: 580px) {
+  .hellokit-layout-content,
+  [data-layout-group] {
+    grid-template-columns: 1fr !important;
   }
+  .hellokit-layout-item {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .hellokit-layout-content,
+  [data-layout-group] {
+    grid-template-columns: 1fr !important;
+  }
+  .hellokit-layout-item {
+    grid-column: auto !important;
+  }
+}
+
+.hellokit-mobile-preview .hellokit-layout-content,
+.hellokit-mobile-preview [data-layout-group] {
+  grid-template-columns: 1fr !important;
+}
+
+.hellokit-mobile-preview .hellokit-layout-item {
+  grid-column: auto !important;
 }
 
 .hellokit-layout-content > [data-node-view-content-react] {
@@ -227,6 +306,14 @@
   font-size: 0.9em;
   color: var(--destructive, #dc2626);
   font-weight: 500;
+}
+
+/* Dark mode: --destructive resolves to a dark red that's invisible on dark bg */
+.dark .ProseMirror code,
+.dark.ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ff8fa3;
 }
 
 /* Blockquotes */
@@ -363,16 +450,260 @@
   cursor: col-resize;
 }
 
-/* Code Blocks (handled by CustomCodeBlock React NodeView) */
-.ProseMirror pre {
-  margin: 0;
+/* ============================================================
+   Code Block Container, Line Numbers, Buttons & Syntax Colors
+   ============================================================ */
+
+.hellokit-code-block {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #1e293b;
+  box-shadow: none;
+  overflow: hidden;
+  font-family: var(--rich-editor-code-font) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
-.ProseMirror pre code {
-  color: inherit;
-  padding: 0;
-  background: none;
-  border: none;
-  font-size: inherit;
+
+.dark .hellokit-code-block,
+.dark.hellokit-code-block {
+  background-color: #0c0d10;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  box-shadow: none;
+}
+
+.hellokit-code-line-numbers {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  text-align: right;
+  padding: 1.25rem 0.85rem 1.25rem 1.25rem;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 24px;
+  font-family: var(--rich-editor-code-font) !important;
+  border-right: 1px solid rgba(226, 232, 240, 0.7);
+  background: rgba(241, 245, 249, 0.4);
+}
+
+.dark .hellokit-code-line-numbers,
+.dark.hellokit-code-line-numbers {
+  color: #52525b;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.hellokit-code-block pre {
+  margin: 0 !important;
+  padding: 1.25rem 6rem 1.25rem 1rem !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  line-height: 24px !important;
+  font-family: var(--rich-editor-code-font) !important;
+  letter-spacing: -0.01em;
+  tab-size: 2;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.hellokit-code-block pre code {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: inherit !important;
+  font-size: 14px !important;
+  line-height: 24px !important;
+  font-family: var(--rich-editor-code-font) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em;
+}
+
+.hellokit-code-btn {
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #64748b;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: none;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hellokit-code-btn:hover {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: none;
+}
+
+.dark .hellokit-code-btn,
+.dark.hellokit-code-btn {
+  background-color: rgba(24, 24, 27, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+  box-shadow: none;
+}
+
+.dark .hellokit-code-btn:hover,
+.dark.hellokit-code-btn:hover {
+  background-color: rgba(39, 39, 42, 0.95);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+}
+
+/* ============================================================
+   Syntax Highlighting Tokens - Ultra Premium Palette
+   ============================================================ */
+
+/* Light Mode */
+.hellokit-code-block .hljs-keyword,
+.hellokit-code-block .hljs-selector-tag,
+.hellokit-code-block .hljs-subst,
+.hellokit-code-block .hljs-doctag {
+  color: #e11d48; /* Vibrant Rose / Magenta */
+  font-weight: 500;
+}
+
+.hellokit-code-block .hljs-title.class_,
+.hellokit-code-block .hljs-title.class_.inherited__ {
+  color: #0284c7; /* Sapphire Blue for Component / Class names */
+  font-weight: 500;
+}
+
+.hellokit-code-block .hljs-title.function_,
+.hellokit-code-block .hljs-title {
+  color: #7c3aed; /* Sophisticated Violet for Functions & Hooks */
+  font-weight: 500;
+}
+
+.hellokit-code-block .hljs-variable.language_ {
+  color: #0284c7;
+}
+
+.hellokit-code-block .hljs-type,
+.hellokit-code-block .hljs-built_in,
+.hellokit-code-block .hljs-symbol {
+  color: #0891b2; /* Deep Cyan / Teal for Types */
+}
+
+.hellokit-code-block .hljs-string,
+.hellokit-code-block .hljs-meta .hljs-string,
+.hellokit-code-block .hljs-regexp {
+  color: #059669; /* Emerald Green */
+}
+
+.hellokit-code-block .hljs-tag,
+.hellokit-code-block .hljs-name {
+  color: #0284c7; /* Sky Blue for JSX / HTML tags */
+}
+
+.hellokit-code-block .hljs-attr,
+.hellokit-code-block .hljs-attribute,
+.hellokit-code-block .hljs-property {
+  color: #d97706; /* Warm Golden Amber for Props */
+}
+
+.hellokit-code-block .hljs-number,
+.hellokit-code-block .hljs-literal {
+  color: #ea580c; /* Coral Orange */
+}
+
+.hellokit-code-block .hljs-comment,
+.hellokit-code-block .hljs-meta {
+  color: #64748b; /* Refined Slate Italic */
+  font-style: italic;
+}
+
+.hellokit-code-block .hljs-punctuation,
+.hellokit-code-block .hljs-operator {
+  color: #475569;
+}
+
+.hellokit-code-block .hljs-params {
+  color: #1e293b;
+}
+
+/* Dark Mode */
+.dark .hellokit-code-block .hljs-keyword,
+.dark .hellokit-code-block .hljs-selector-tag,
+.dark .hellokit-code-block .hljs-subst,
+.dark .hellokit-code-block .hljs-doctag,
+.dark.hellokit-code-block .hljs-keyword {
+  color: #fb7185; /* Luminous Coral Rose */
+  font-weight: 500;
+}
+
+.dark .hellokit-code-block .hljs-title.class_,
+.dark .hellokit-code-block .hljs-title.class_.inherited__,
+.dark.hellokit-code-block .hljs-title.class_ {
+  color: #38bdf8; /* Bright Electric Sky Blue */
+  font-weight: 500;
+}
+
+.dark .hellokit-code-block .hljs-title.function_,
+.dark .hellokit-code-block .hljs-title,
+.dark.hellokit-code-block .hljs-title.function_ {
+  color: #c084fc; /* Ethereal Lilac / Purple */
+  font-weight: 500;
+}
+
+.dark .hellokit-code-block .hljs-variable.language_,
+.dark.hellokit-code-block .hljs-variable.language_ {
+  color: #38bdf8;
+}
+
+.dark .hellokit-code-block .hljs-type,
+.dark .hellokit-code-block .hljs-built_in,
+.dark .hellokit-code-block .hljs-symbol,
+.dark.hellokit-code-block .hljs-type {
+  color: #22d3ee; /* Bright Cyan */
+}
+
+.dark .hellokit-code-block .hljs-string,
+.dark .hellokit-code-block .hljs-meta .hljs-string,
+.dark .hellokit-code-block .hljs-regexp,
+.dark.hellokit-code-block .hljs-string {
+  color: #34d399; /* Vibrant Mint Emerald */
+}
+
+.dark .hellokit-code-block .hljs-tag,
+.dark .hellokit-code-block .hljs-name,
+.dark.hellokit-code-block .hljs-tag {
+  color: #38bdf8;
+}
+
+.dark .hellokit-code-block .hljs-attr,
+.dark .hellokit-code-block .hljs-attribute,
+.dark .hellokit-code-block .hljs-property,
+.dark.hellokit-code-block .hljs-attr {
+  color: #fbbf24; /* Warm Gold */
+}
+
+.dark .hellokit-code-block .hljs-number,
+.dark .hellokit-code-block .hljs-literal,
+.dark.hellokit-code-block .hljs-number {
+  color: #fb923c; /* Warm Orange */
+}
+
+.dark .hellokit-code-block .hljs-comment,
+.dark .hellokit-code-block .hljs-meta,
+.dark.hellokit-code-block .hljs-comment {
+  color: #71717a; /* Muted Zinc Italic */
+  font-style: italic;
+}
+
+.dark .hellokit-code-block .hljs-punctuation,
+.dark .hellokit-code-block .hljs-operator,
+.dark.hellokit-code-block .hljs-punctuation {
+  color: #94a3b8;
+}
+
+.dark .hellokit-code-block .hljs-params,
+.dark.hellokit-code-block .hljs-params {
+  color: #f1f5f9;
 }
 
 /* Text Alignment */
@@ -427,4 +758,53 @@
 
 .ProseMirror ul[data-type="taskList"] li > div {
   flex: 1 1 auto;
+}
+
+/* ============================================================
+   Preview Dialog Frame Specific Styles
+   ============================================================ */
+
+.hellokit-preview-frame {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hellokit-preview-frame .ProseMirror {
+  min-height: auto !important;
+  padding: 0 !important;
+}
+
+.hellokit-preview-frame * {
+  max-width: 100%;
+}
+
+.hellokit-preview-frame pre {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* ============================================================
+   Tooltip Specific Styles (Compact, Sleek, Pixel Perfect)
+   ============================================================ */
+
+.hellokit-tooltip {
+  font-size: 11px !important;
+  line-height: 14px !important;
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+  max-width: 250px;
+  white-space: nowrap;
+}
+
+.dark .hellokit-tooltip,
+.dark.hellokit-tooltip {
+  background-color: #18181b !important;
+  color: #fafafa !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
